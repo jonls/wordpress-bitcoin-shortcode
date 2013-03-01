@@ -1,0 +1,27 @@
+
+Bitcoin button plugin
+=====================
+
+This Wordpress plugin providing a shortcode for showing links to bitcoin addresses.
+
+Example shortcode:
+[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp"]
+
+The shortcode will insert a small button that links to the Bitcoin address. When
+the mouse is hovered over the button a QR code representing the address is shown.
+Further info on the address can be shown to the right of the button. This info is
+fetched from the API at http://blockchain.info/.
+
+To show the number of transactions the address has been used in:
+[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="transaction"]
+
+To show the current balance of the address:
+[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="balance"]
+
+To show no info other than the address and QR code:
+[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="none"]
+
+Widgets
+-------
+It is also possible to use shortcodes in widgets but this requires an additional
+plugin to be installed.
