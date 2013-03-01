@@ -24,4 +24,9 @@ To show no info other than the address and QR code:
 Widgets
 -------
 It is also possible to use shortcodes in widgets but this requires an additional
-plugin to be installed.
+plugin to be installed (e.g http://wordpress.org/extend/plugins/shortcodes-in-sidebar-widgets/).
+
+Demo
+----
+Here is a demo of the plugin:
+http://jonls.dk/2013/03/trying-out-bitcoin-wordpress-plugin/
