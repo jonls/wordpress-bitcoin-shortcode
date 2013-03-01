@@ -30,3 +30,8 @@ Demo
 ----
 Here is a demo of the plugin:
 http://jonls.dk/2013/03/trying-out-bitcoin-wordpress-plugin/
+
+Install
+-------
+Create a directory named `bitcoin-button` under `/wp-content/plugins` and
+put all files from this repository inside.
