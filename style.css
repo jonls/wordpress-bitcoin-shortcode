@@ -1,5 +1,5 @@
 
-.bitcoin-button, .bitcoin-counter {
+body .bitcoin-div a.bitcoin-button, body .bitcoin-div a.bitcoin-counter {
     display: inline-block;
     border: 1px solid; 
     border-radius: 5px;
@@ -9,7 +9,7 @@
     font-family: "Helvetica", sans-serif;
 }
 
-.bitcoin-button {
+body .bitcoin-div a.bitcoin-button {
     border-color: #f7931a;
     color: white;
     background-color: #f9aa4b;
@@ -20,18 +20,18 @@
     font-weight: bold;
 }
 
-.bitcoin-button:hover {
+body .bitcoin-div a.bitcoin-button:hover {
     color: white;
     text-decoration: none;
     background-color: #f7931a;
 }
 
-.bitcoin-div {
+body .bitcoin-div {
     display: inline-block;
     position: relative;
 }
 
-.bitcoin-counter {
+body .bitcoin-div a.bitcoin-counter {
     text-align: center;
     border-color: #999;
     color: #999;
@@ -39,13 +39,13 @@
     padding: 1px 15px;
 }
 
-.bitcoin-counter:hover {
+body .bitcoin-div a.bitcoin-counter:hover {
     border-color: black;
     color: black;
     text-decoration: none;
 }
 
-.bitcoin-bubble {
+body .bitcoin-div .bitcoin-bubble {
     display: none;
     position: absolute;
     border: 1px solid #555;
