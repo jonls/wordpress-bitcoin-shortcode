@@ -38,7 +38,9 @@ if (!isset($data->address) || $data->address != $address) {
     die();
 }
 
-if (!isset($data->n_tx) || !isset($data->final_balance)) {
+if (!isset($data->n_tx) ||
+    !isset($data->final_balance) ||
+    !isset($data->total_received)) {
     status_header(400);
     die();
 }
@@ -51,4 +53,5 @@ header('Content-Type: application/json');
 
 echo ('{"address":"'.$address.'",'.
       '"transactions":'.intval($data->n_tx).','.
+      '"received":'.intval($data->total_received).','.
       '"balance":'.intval($data->final_balance).'}');

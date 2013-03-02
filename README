@@ -2,7 +2,8 @@
 Bitcoin button plugin
 =====================
 
-This Wordpress plugin providing a shortcode for showing links to bitcoin addresses.
+This Wordpress plugin providing a shortcode for showing links to bitcoin addresses
+which can for example be used as a donation address.
 
 Example shortcode:
 [bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp"]
@@ -14,6 +15,9 @@ fetched from the API at http://blockchain.info/.
 
 To show the number of transactions the address has been used in:
 [bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="transaction"]
+
+To show the amount received by the address:
+[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="received"]
 
 To show the current balance of the address:
 [bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="balance"]

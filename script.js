@@ -21,6 +21,8 @@
 			counter.text(data.transactions+" tx");
 		    } else if (show_info == 'balance') {
 			counter.text((data.balance/100000000).toFixed(3)+" ฿");
+		    } else if (show_info == 'received') {
+			counter.text((data.received/100000000).toFixed(3)+" ฿")
 		    }
 		}, 'json');
 	    }

@@ -23,7 +23,7 @@ add_action('init', 'bitcoin_button_load_scripts_init_cb');
 
 function bitcoin_button_shortcode_handler($atts) {
     $address = $atts['address'];
-    $info = isset($atts['info']) ? $atts['info'] : 'balance';
+    $info = isset($atts['info']) ? $atts['info'] : 'received';
 	$t = null;
 
 	if (!is_feed()) {
