@@ -56,6 +56,6 @@ body .bitcoin-div .bitcoin-bubble {
     border-radius: 5px;
     text-align: center;
     padding: 4px 0.5em;
-    font-size: small;
+    font-size: smaller;
     font-family: "Helvetica", sans-serif;
 }
