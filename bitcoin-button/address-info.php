@@ -7,6 +7,8 @@ require_once(ABSPATH.'wp-includes/wp-db.php');
 require_once(ABSPATH.'wp-includes/functions.php');
 require_once(ABSPATH.'wp-includes/formatting.php');
 
+$blockchain_cache_time = 30*60;
+
 if (!isset($_GET['address'])) {
     status_header(404);
     die();
@@ -30,7 +32,7 @@ if ($data === false) {
 
     $data = json_decode(wp_remote_retrieve_body($response));
 
-    set_transient('blockchain-address-'.$address, $data, 30*60);
+    set_transient('blockchain-address-'.$address, $data, $blockchain_cache_time);
 }
 
 if (!isset($data->address) || $data->address != $address) {
@@ -45,11 +47,8 @@ if (!isset($data->n_tx) ||
     die();
 }
 
-header('Cache-Control: no-cache, no-store, must-revalidate');
-header('Pragma: no-cache');
-header('Expires: 0');
-
 header('Content-Type: application/json');
+header('Expires: '.gmdate('D, d M Y H:i:s', time() + $blockchain_cache_time).' GMT');
 
 echo ('{"address":"'.$address.'",'.
       '"transactions":'.intval($data->n_tx).','.
