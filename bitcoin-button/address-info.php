@@ -19,6 +19,13 @@ if ($address === '') {
     die();
 }
 
+/* Only allow external queries that have been explicitly allowed. */
+$address_list = get_option('bitcoin_address_list', array());
+if (!in_array($address, $address_list)) {
+    status_header(404);
+    die();
+}
+
 $data = get_transient('blockchain-address-'.$address);
 if ($data === false) {
     $response = wp_remote_get('http://blockchain.info/address/'.urlencode($address).'?format=json&limit=0');

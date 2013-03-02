@@ -36,6 +36,11 @@ function bitcoin_button_shortcode_handler($atts) {
     if (!is_null($message)) $params[] = 'message='.urlencode($message);
     if (count($params) > 0) $url .= '?'.implode('&', $params);
 
+    /* Allow this address to be queried externally from address-info.php. */
+    $address_list = get_option('bitcoin_address_list', array());
+    $address_list[] = $address;
+    update_option('bitcoin_address_list', $address_list);
+
 	$t = null;
 	if (!is_feed()) {
 		$t = '<a class="bitcoin-button" data-address="'.$address.'" data-info="'.$info.'" href="'.$url.'">Bitcoin</a>';
