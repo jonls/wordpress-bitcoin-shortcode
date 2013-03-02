@@ -25,6 +25,13 @@ To show the current balance of the address:
 To show no info other than the address and QR code:
 [bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="none"]
 
+URL hints
+---------
+The bitcoin URLs can optionally include a label, a message and/or a suggested
+amount to pay. These can be added to the URLs by setting the corresponding
+setting on the shortcode. For example:
+[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" label="jonls.dk" amount="0.02" message="For donations to my projects"]
+
 Widgets
 -------
 It is also possible to use shortcodes in widgets but this requires an additional

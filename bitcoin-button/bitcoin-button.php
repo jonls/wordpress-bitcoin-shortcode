@@ -24,12 +24,23 @@ add_action('init', 'bitcoin_button_load_scripts_init_cb');
 function bitcoin_button_shortcode_handler($atts) {
     $address = $atts['address'];
     $info = isset($atts['info']) ? $atts['info'] : 'received';
-	$t = null;
+    $amount = isset($atts['amount']) ? $atts['amount'] : null;
+    $label = isset($atts['label']) ? $atts['label'] : null;
+    $message = isset($atts['message']) ? $atts['message'] : null;
 
+    /* Build bitcoin url */
+    $url = 'bitcoin:'.$address;
+    $params = array();
+    if (!is_null($amount)) $params[] = 'amount='.urlencode($amount);
+    if (!is_null($label)) $params[] = 'label='.urlencode($label);
+    if (!is_null($message)) $params[] = 'message='.urlencode($message);
+    if (count($params) > 0) $url .= '?'.implode('&', $params);
+
+	$t = null;
 	if (!is_feed()) {
-		$t = '<a class="bitcoin-button" data-address="'.$address.'" data-info="'.$info.'" href="bitcoin:'.$address.'">Bitcoin</a>';
+		$t = '<a class="bitcoin-button" data-address="'.$address.'" data-info="'.$info.'" href="'.$url.'">Bitcoin</a>';
 	} else {
-		$t = 'Bitcoin: <a href="bitcoin:'.$address.'">'.$address.'</a>';
+		$t = 'Bitcoin: <a href="'.$url.'">'.(!is_null($label) ? $label : $address).'</a>';
 	}
 
 	return $t;
