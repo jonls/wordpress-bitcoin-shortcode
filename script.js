@@ -20,7 +20,7 @@
 		    if (show_info == 'transaction') {
 			counter.text(data.transactions+" tx");
 		    } else if (show_info == 'balance') {
-			counter.text((data.balance/10000000).toFixed(3)+" ฿");
+			counter.text((data.balance/100000000).toFixed(3)+" ฿");
 		    }
 		}, 'json');
 	    }
