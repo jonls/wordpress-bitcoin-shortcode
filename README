@@ -37,5 +37,4 @@ http://jonls.dk/2013/03/trying-out-bitcoin-wordpress-plugin/
 
 Install
 -------
-Create a directory named `bitcoin-button` under `/wp-content/plugins` and
-put all files from this repository inside.
+Copy the directory `bitcoin-button` into `/wp-content/plugins`.
