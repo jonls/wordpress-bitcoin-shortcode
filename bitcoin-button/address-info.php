@@ -3,7 +3,6 @@
 define('ABSPATH', dirname(__FILE__).'/../../../');
 require_once(ABSPATH.'wp-config.php');
 require_once(ABSPATH.'wp-load.php');
-require_once(ABSPATH.'wp-includes/wp-db.php');
 require_once(ABSPATH.'wp-includes/functions.php');
 require_once(ABSPATH.'wp-includes/formatting.php');
 
