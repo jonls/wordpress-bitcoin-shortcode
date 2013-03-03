@@ -26,13 +26,20 @@ if (!in_array($address, $address_list)) {
     die();
 }
 
+/* Set JSON content type and caching policy. */
+header('Content-Type: application/json');
+header('Expires: '.gmdate('D, d M Y H:i:s', time() + $blockchain_cache_time).' GMT');
+
+$output = array('address' => $address);
+
 $data = get_transient('blockchain-address-'.$address);
 if ($data === false) {
     $response = wp_remote_get('http://blockchain.info/address/'.urlencode($address).'?format=json&limit=0');
     $code = wp_remote_retrieve_response_code($response);
 
     if ($code != 200) {
-        status_header(400);
+        error_log('Response '.$code.' from blockchain.info');
+        echo json_encode($output);
         die();
     }
 
@@ -42,21 +49,12 @@ if ($data === false) {
 }
 
 if (!isset($data->address) || $data->address != $address) {
-    status_header(400);
+    echo json_encode($output);
     die();
 }
 
-if (!isset($data->n_tx) ||
-    !isset($data->final_balance) ||
-    !isset($data->total_received)) {
-    status_header(400);
-    die();
-}
+if (isset($data->n_tx)) $output['transactions'] = intval($data->n_tx);
+if (isset($data->final_balance)) $output['balance'] = intval($data->final_balance);
+if (isset($data->total_received)) $output['received'] = intval($data->total_received);
 
-header('Content-Type: application/json');
-header('Expires: '.gmdate('D, d M Y H:i:s', time() + $blockchain_cache_time).' GMT');
-
-echo ('{"address":"'.$address.'",'.
-      '"transactions":'.intval($data->n_tx).','.
-      '"received":'.intval($data->total_received).','.
-      '"balance":'.intval($data->final_balance).'}');
+echo json_encode($output);
