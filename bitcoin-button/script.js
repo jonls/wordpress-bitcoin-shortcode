@@ -6,7 +6,7 @@
 	    var div = $(this).wrap('<div class="bitcoin-div" style="inline-block"/>').parent();
 	    var show_info = $(this).data('info');
 
-	    div.append('<div class="bitcoin-bubble" style="display:hidden;"><div><strong>Bitcoin address</strong></div><a href="'+url+'"><img src="http://chart.googleapis.com/chart?chs=200x200&cht=qr&chld=H|0&chl='+encodeURIComponent(url)+'" width="200" height="200" alt="QR code"/></a><div><a href="'+url+'">'+address+'</a></div></div>');
+	    div.append('<div class="bitcoin-bubble" style="display:none;"><div><strong>Bitcoin address</strong></div><a href="'+url+'"><img src="http://chart.googleapis.com/chart?chs=200x200&cht=qr&chld=H|0&chl='+encodeURIComponent(url)+'" width="200" height="200" alt="QR code"/></a><div><a href="'+url+'">'+address+'</a></div></div>');
 
 	    div.hover(function () {
 		$(this).find('.bitcoin-bubble').fadeIn(150);
