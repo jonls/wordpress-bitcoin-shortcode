@@ -16,7 +16,7 @@
 	    });
 
 	    if (show_info && show_info != 'none') {
-		$.get('/wp-content/plugins/bitcoin-button/address-info.php', { address: address }, function (data) {
+		$.get(bitcoin_button_ajax.url, { action: 'bitcoin-address-info', address: address }, function (data) {
 		    var counter = div.find('.bitcoin-counter');
 		    if (show_info == 'transaction' && data.transactions !== undefined) {
 			counter.text(data.transactions+" tx");
