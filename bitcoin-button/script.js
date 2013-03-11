@@ -3,7 +3,7 @@
 	$('.bitcoin-button').each(function () {
 	    var url = $(this).attr('href');
 	    var address = $(this).data('address');
-	    var div = $(this).wrap('<div class="bitcoin-div" style="inline-block"/>').parent();
+	    var div = $(this).wrap('<div class="bitcoin-div"/>').parent();
 	    var show_info = $(this).data('info');
 
 	    div.append('<a href="'+url+'" class="bitcoin-counter" style="display:none;">&nbsp;</a>');
