@@ -91,7 +91,7 @@ function bitcoin_button_get_address_info() {
 
     $output = array('address' => $address);
 
-    $data = get_transient('blockchain-address-'.$address);
+    $data = get_transient('btcaddr-'.$address);
     if ($data === false) {
         $response = wp_remote_get('http://blockchain.info/address/'.urlencode($address).'?format=json&limit=0');
         $code = wp_remote_retrieve_response_code($response);
@@ -104,7 +104,7 @@ function bitcoin_button_get_address_info() {
 
         $data = json_decode(wp_remote_retrieve_body($response));
 
-        set_transient('blockchain-address-'.$address, $data, $blockchain_cache_time);
+        set_transient('btcaddr-'.$address, $data, $blockchain_cache_time);
     }
 
     if (!isset($data->address) || $data->address != $address) {
