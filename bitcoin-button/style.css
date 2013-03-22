@@ -35,6 +35,7 @@ body .bitcoin-div a.bitcoin-counter {
     text-align: center;
     border-color: #999;
     color: #999;
+    background-color: white;
     margin-left: 3px;
     padding: 1px 15px;
 }
