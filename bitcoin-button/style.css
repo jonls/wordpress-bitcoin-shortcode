@@ -1,62 +1,66 @@
-
-body .bitcoin-div a.bitcoin-button, body .bitcoin-div a.bitcoin-counter {
-    display: inline-block;
-    border: 1px solid; 
-    border-radius: 5px;
-    line-height: 18px;
-    font-size: 10pt;
-    text-decoration: none;
-    font-family: "Helvetica", sans-serif;
+.bitcoin-wrap {
+	display: block;
+	position: relative;
 }
 
-body .bitcoin-div a.bitcoin-button {
-    border-color: #f7931a;
-    color: white;
-    background-color: #f9aa4b;
-    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAbwAAAG8B8aLcQwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAHsSURBVDiNdZPPaxNBHMU/s9kmVVJq2tIoiAd/gIqgoP+A3jx48SBYPYWCqKeCJxGkFxHvgpd6a496axSkeFHwJngQQUsjBglqfrBpm8xm53nIJtms9QsLy/Dem/dm3hhJpKYILAA3gBmgDQRAGXgKNMbQkpLfsqRQzknhjiQn2W0lJpD0RJI/4AyIvqSVAcq1f8q+ui2381t2fVF7zMpAwIuNPAJKRF3U3EStCup1Uf0L6nXAttMxS8AygJFUAL4DeQVVeu+WUeMb8rJ4haOo00S/PsH+eSYuPsY7eGEg0gMOI+lB0ptrVdRduyRbvjVci2oftfvshOzGvXSUJR+4PGbOmNF/1EXdFqq+B8CbP5uOctMHptKrAK65iV0vQbiLGl8xuWnM7Mk0rOAB+XGm6+9WOEb2yirZqy/ILmyAN4F9eQ11mkl02wPq46JxsUxmlGrfHGbmOCD053MSHPjAKnB+SG9VYicR2q5B1MFV3uKqH8CfxMyeSgqUjaQi8APwFVQJy4sQWRSF4CxEFpM/hJk7Q+b0dbziuaF94EiywqOrbG7JvlmSa23Jvr6zVxMVV3rYxIfA81FoA7kDkJmE3HT65Imx9/uZRw/Jj1WD/20pKYzdDnlG/z7nAnCXfsGm6F9zPT7sNaCWBP8FATajaZClAHUAAAAASUVORK5CYII=');
-    background-repeat: no-repeat;
-    background-position: 2px center;
-    padding: 1px 5px 1px 23px;
-    font-weight: bold;
+.bitcoin-wrap .bitcoin-button,
+.bitcoin-wrap .bitcoin-counter {
+	display: inline-block;
+	border: 1px solid; 
+	border-radius: 5px;
+	line-height: 18px;
+	font-size: 10pt;
+	text-decoration: none;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-body .bitcoin-div a.bitcoin-button:hover {
-    color: white;
-    text-decoration: none;
-    background-color: #f7931a;
+.bitcoin-wrap .bitcoin-button {
+	border-color: #f7931a;
+	color: #fff;
+	background-color: #f9aa4b;
+	background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAbwAAAG8B8aLcQwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAHsSURBVDiNdZPPaxNBHMU/s9kmVVJq2tIoiAd/gIqgoP+A3jx48SBYPYWCqKeCJxGkFxHvgpd6a496axSkeFHwJngQQUsjBglqfrBpm8xm53nIJtms9QsLy/Dem/dm3hhJpKYILAA3gBmgDQRAGXgKNMbQkpLfsqRQzknhjiQn2W0lJpD0RJI/4AyIvqSVAcq1f8q+ui2381t2fVF7zMpAwIuNPAJKRF3U3EStCup1Uf0L6nXAttMxS8AygJFUAL4DeQVVeu+WUeMb8rJ4haOo00S/PsH+eSYuPsY7eGEg0gMOI+lB0ptrVdRduyRbvjVci2oftfvshOzGvXSUJR+4PGbOmNF/1EXdFqq+B8CbP5uOctMHptKrAK65iV0vQbiLGl8xuWnM7Mk0rOAB+XGm6+9WOEb2yirZqy/ILmyAN4F9eQ11mkl02wPq46JxsUxmlGrfHGbmOCD053MSHPjAKnB+SG9VYicR2q5B1MFV3uKqH8CfxMyeSgqUjaQi8APwFVQJy4sQWRSF4CxEFpM/hJk7Q+b0dbziuaF94EiywqOrbG7JvlmSa23Jvr6zVxMVV3rYxIfA81FoA7kDkJmE3HT65Imx9/uZRw/Jj1WD/20pKYzdDnlG/z7nAnCXfsGm6F9zPT7sNaCWBP8FATajaZClAHUAAAAASUVORK5CYII=');
+	background-repeat: no-repeat;
+	background-position: 2px center;
+	padding: 1px 5px 1px 23px;
+	font-weight: bold;
 }
 
-body .bitcoin-div {
-    display: inline-block;
-    position: relative;
+.bitcoin-wrap .bitcoin-button:hover {
+	color: #fff;
+	text-decoration: none;
+	background-color: #f7931a;
 }
 
-body .bitcoin-div a.bitcoin-counter {
-    text-align: center;
-    border-color: #999;
-    color: #999;
-    background-color: white;
-    margin-left: 3px;
-    padding: 1px 15px;
+.bitcoin-wrap .bitcoin-counter {
+	text-align: center;
+	border-color: #999;
+	color: #999;
+	background-color: #fff;
+	margin-left: 3px;
+	padding: 1px 15px;
 }
 
-body .bitcoin-div a.bitcoin-counter:hover {
-    border-color: black;
-    color: black;
-    text-decoration: none;
+.bitcoin-wrap .bitcoin-counter:hover {
+	border-color: #000;
+	color: #000;
+	text-decoration: none;
 }
 
-body .bitcoin-div .bitcoin-bubble {
-    display: none;
-    position: absolute;
-    border: 1px solid #555;
-    z-index: 1000;
-    color: black;
-    background-color: white;
-    bottom: 24px;
-    border-radius: 5px;
-    text-align: center;
-    padding: 4px 0.5em;
-    font-size: 9pt;
-    font-family: "Helvetica", sans-serif;
+.bitcoin-wrap .bitcoin-bubble {
+	display: none;
+	position: absolute;
+	border: 1px solid #555;
+	z-index: 1000;
+	color: #000;
+	background-color: #fff;
+	bottom: 24px;
+	border-radius: 5px;
+	text-align: center;
+	padding: 4px 0.5em;
+	font-size: 9pt;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.bitcoin-wrap .bitcoin-bubble .address {
+	display: block;
 }
