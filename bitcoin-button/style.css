@@ -43,12 +43,39 @@ body {
     border-color: #999;
     color: #999;
     background-color: white;
-    margin-left: 3px;
+    margin-left: 5px;
     padding: 1px 15px;
+}
+
+#counter:before, #counter:after {
+    content: ' ';
+    border: 5px solid transparent;
+    position: absolute;
+    width: 0;
+    height: 0;
+    right: 100%;
+    top: 50%;
+}
+
+#counter:before {
+    margin: -5px 0 0 0;
+    border-right-color: #999;
+    z-index: 1000;
+}
+
+#counter:after {
+    margin: -4px 0 0 0;
+    border-width: 4px;
+    border-right-color: white;
+    z-index: 1001;
 }
 
 #counter:hover {
     border-color: black;
     color: black;
     text-decoration: none;
+}
+
+#counter:hover:before {
+    border-right-color: black;
 }
