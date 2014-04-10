@@ -13,11 +13,14 @@ Version: 0.4
 Author URI: http://jonls.dk/
 */
 
+
+global $bitcoin_button_db_version;
+$bitcoin_button_db_version = '1';
+
+
 function bitcoin_button_load_scripts_init_cb() {
 	if (!is_admin()) {
         wp_enqueue_style('bitcoin-button', plugins_url('/style.css', __FILE__));
-		wp_enqueue_script('bitcoin-button', plugins_url('/script.js', __FILE__), array('jquery'));
-        wp_localize_script('bitcoin-button', 'bitcoin_button_ajax', array('url' => admin_url('admin-ajax.php')));
 	}
 }
 add_action('init', 'bitcoin_button_load_scripts_init_cb');
@@ -25,99 +28,113 @@ add_action('init', 'bitcoin_button_load_scripts_init_cb');
 
 /* Shortcode handler for "bitcoin" */
 function bitcoin_button_shortcode_handler($atts) {
-    $address = $atts['address'];
+    global $wpdb;
+
+    $code = $atts['code'];
+    $url = 'https://coinbase.com/checkouts/'.$code;
     $info = isset($atts['info']) ? $atts['info'] : 'received';
-    $amount = isset($atts['amount']) ? $atts['amount'] : null;
-    $label = isset($atts['label']) ? $atts['label'] : null;
-    $message = isset($atts['message']) ? $atts['message'] : null;
 
-    /* Build bitcoin url */
-    $url = 'bitcoin:'.$address;
-    $params = array();
-    if (!is_null($amount)) $params[] = 'amount='.urlencode($amount);
-    if (!is_null($label)) $params[] = 'label='.urlencode($label);
-    if (!is_null($message)) $params[] = 'message='.urlencode($message);
-    if (count($params) > 0) $url .= '?'.implode('&', $params);
+    $table_name = $wpdb->prefix.'bitcoin_button_coinbase';
 
-    /* Allow this address to be queried externally from address-info.php. */
-    $address_list = get_option('bitcoin_address_list', array());
-    $address_list[] = $address;
-    update_option('bitcoin_address_list', $address_list);
-
-	$t = null;
-	if (!is_feed()) {
-		$t = '<a class="bitcoin-button" data-address="'.$address.'" data-info="'.$info.'" href="'.$url.'">Bitcoin</a>';
-	} else {
-		$t = 'Bitcoin: <a href="'.$url.'">'.(!is_null($label) ? $label : $address).'</a>';
-	}
+    $t = null;
+    if (!is_feed()) {
+        $t = '<div class="bitcoin-div">'.
+            '<a class="bitcoin-button" target="_blank" href="'.$url.'">Bitcoin</a>';
+        if ($info == 'received') {
+            $btc = $wpdb->get_var($wpdb->prepare('SELECT IFNULL(SUM(btc), 0) FROM '.$table_name.' WHERE code = %s', $code));
+            $btc = number_format((float)$btc / 100000000, 3, '.', '');
+            $t .= '<a class="bitcoin-counter" target="_blank" href="'.$url.'">'.$btc.' &#3647;</a>';
+        } else if ($info == 'count') {
+            $count = $wpdb->get_var($wpdb->prepare('SELECT IFNULL(COUNT(*), 0) FROM '.$table_name.' WHERE code = %s', $code));
+            $t .= '<a class="bitcoin-counter" target="_blank" href="'.$url.'">'.$count.'</a>';
+        }
+        $t .= '</div>';
+    } else {
+        $t = '<a href="'.$url.'" target="_blank">Bitcoin</a>';
+    }
 
 	return $t;
 }
 add_shortcode('bitcoin', 'bitcoin_button_shortcode_handler');
 
 
-/* AJAX handler for Bitcoin address data */
-function bitcoin_button_get_address_info() {
-    $blockchain_cache_time = 30*60;
+/* Callback handler for coinbase */
+function bitcoin_button_coinbase_callback() {
+    global $wpdb;
 
-    if (!isset($_GET['address'])) {
-        header('Content-Type: text/plain');
-        status_header(404);
-        echo 'Invalid address';
+    /* Only activate on specific URL */
+    if ($_SERVER['REQUEST_URI'] != '/coinbase_callback/testthisisasecret') return;
+
+    /* Check request method */
+    if ($_SERVER['REQUEST_METHOD'] != 'POST') {
+        header('Allow: POST');
+        status_header(405);
         exit;
     }
 
-    $address = trim($_GET['address']);
-    if ($address === '') {
-        header('Content-Type: text/plain');
-        status_header(404);
-        echo 'Invalid address';
+    $doc = json_decode(file_get_contents('php://input'), TRUE);
+
+    /* Validate document */
+    if (!isset($doc['order']) ||
+        !isset($doc['order']['id']) ||
+        !isset($doc['order']['created_at']) ||
+        !isset($doc['order']['status']) ||
+        $doc['order']['status'] != 'completed' ||
+        !isset($doc['order']['total_btc']) ||
+        !isset($doc['order']['total_btc']['cents']) ||
+        !isset($doc['order']['total_native']) ||
+        !isset($doc['order']['total_native']['cents']) ||
+        !isset($doc['order']['button']) ||
+        !isset($doc['order']['button']['id'])) {
+        echo 'Validation error';
         exit;
     }
 
-    /* Only allow external queries that have been explicitly allowed. */
-    $address_list = get_option('bitcoin_address_list', array());
-    if (!in_array($address, $address_list)) {
-        header('Content-Type: text/plain');
-        status_header(404);
-        echo 'Address not allowed';
-        exit;
-    }
+    /* Parse document */
+    $id = $doc['order']['id'];
 
-    header('Content-Type: application/json');
+    $ctime = strtotime($doc['order']['created_at']);
+    if ($ctime === FALSE) exit;
 
-    /* Set JSON content type and caching policy. */
-    header('Expires: '.gmdate('D, d M Y H:i:s', time() + $blockchain_cache_time).' GMT');
+    date_default_timezone_set('UTC');
+    $ctime = date('Y-m-d H:i:s', $ctime);
 
-    $output = array('address' => $address);
+    $btc = $doc['order']['total_btc']['cents'];
+    $native = $doc['order']['total_native']['cents'];
 
-    $data = get_transient('btcaddr-'.$address);
-    if ($data === false) {
-        $response = wp_remote_get('http://blockchain.info/address/'.urlencode($address).'?format=json&limit=0');
-        $code = wp_remote_retrieve_response_code($response);
+    $code = $doc['order']['button']['id'];
 
-        if ($code != 200) {
-            error_log('Response '.$code.' from blockchain.info');
-            echo json_encode($output);
-            exit;
-        }
+    /* Insert in database */
+    $table_name = $wpdb->prefix.'bitcoin_button_coinbase';
+    $wpdb->insert($table_name, array('id' => $id, 'ctime' => $ctime,
+                                     'btc' => $btc, 'native' => $native,
+                                     'code' => $code));
 
-        $data = json_decode(wp_remote_retrieve_body($response));
-
-        set_transient('btcaddr-'.$address, $data, $blockchain_cache_time);
-    }
-
-    if (!isset($data->address) || $data->address != $address) {
-        echo json_encode($output);
-        exit;
-    }
-
-    if (isset($data->n_tx)) $output['transactions'] = intval($data->n_tx);
-    if (isset($data->final_balance)) $output['balance'] = intval($data->final_balance);
-    if (isset($data->total_received)) $output['received'] = intval($data->total_received);
-
-    echo json_encode($output);
     exit;
 }
-add_action('wp_ajax_nopriv_bitcoin-address-info', 'bitcoin_button_get_address_info');
-add_action('wp_ajax_bitcoin-address-info', 'bitcoin_button_get_address_info');
+add_action('init', 'bitcoin_button_coinbase_callback');
+
+
+/* Create database on activation */
+function bitcoin_button_install() {
+    global $wpdb;
+    global $bitcoin_button_db_version;
+
+    $table_name = $wpdb->prefix.'bitcoin_button_coinbase';
+
+    $sql = "CREATE TABLE $table_name (
+  id VARCHAR(15) NOT NULL,
+  ctime TIMESTAMP NOT NULL,
+  btc DECIMAL(20) NOT NULL,
+  native DECIMAL(20) NOT NULL,
+  code VARCHAR(50) NOT NULL,
+  UNIQUE KEY id (id),
+  KEY code (code, ctime)
+);";
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+
+    add_option('bitcoin_button_db_version', $bitcoin_button_db_version);
+}
+register_activation_hook(__FILE__, 'bitcoin_button_install');

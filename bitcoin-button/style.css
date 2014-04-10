@@ -45,18 +45,3 @@ body .bitcoin-div a.bitcoin-counter:hover {
     color: black;
     text-decoration: none;
 }
-
-body .bitcoin-div .bitcoin-bubble {
-    display: none;
-    position: absolute;
-    border: 1px solid #555;
-    z-index: 1000;
-    color: black;
-    background-color: white;
-    bottom: 24px;
-    border-radius: 5px;
-    text-align: center;
-    padding: 4px 0.5em;
-    font-size: 9pt;
-    font-family: "Helvetica", sans-serif;
-}
