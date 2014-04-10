@@ -19,36 +19,25 @@ $bitcoin_button_db_version = '1';
 
 
 function bitcoin_button_load_scripts_init_cb() {
-	if (!is_admin()) {
-        wp_enqueue_style('bitcoin-button', plugins_url('/style.css', __FILE__));
-	}
+    global $wp;
+    $wp->add_query_var('bitcoin_button_widget');
+    $wp->add_query_var('bitcoin_button_info');
 }
 add_action('init', 'bitcoin_button_load_scripts_init_cb');
 
 
 /* Shortcode handler for "bitcoin" */
 function bitcoin_button_shortcode_handler($atts) {
-    global $wpdb;
-
     $code = $atts['code'];
     $url = 'https://coinbase.com/checkouts/'.$code;
     $info = isset($atts['info']) ? $atts['info'] : 'received';
 
-    $table_name = $wpdb->prefix.'bitcoin_button_coinbase';
-
     $t = null;
     if (!is_feed()) {
-        $t = '<div class="bitcoin-div">'.
-            '<a class="bitcoin-button" target="_blank" href="'.$url.'">Bitcoin</a>';
-        if ($info == 'received') {
-            $btc = $wpdb->get_var($wpdb->prepare('SELECT IFNULL(SUM(btc), 0) FROM '.$table_name.' WHERE code = %s', $code));
-            $btc = number_format((float)$btc / 100000000, 3, '.', '');
-            $t .= '<a class="bitcoin-counter" target="_blank" href="'.$url.'">'.$btc.' &#3647;</a>';
-        } else if ($info == 'count') {
-            $count = $wpdb->get_var($wpdb->prepare('SELECT IFNULL(COUNT(*), 0) FROM '.$table_name.' WHERE code = %s', $code));
-            $t .= '<a class="bitcoin-counter" target="_blank" href="'.$url.'">'.$count.'</a>';
-        }
-        $t .= '</div>';
+        $t = '<iframe src="'.site_url().'/?bitcoin_button_widget='.urlencode($code).
+            '&bitcoin_button_info='.urlencode($info).'" width="250" height="24" '.
+            'frameborder="0" scrolling="no" title="Bitcoin Button" border="0" '.
+            'marginheight="0" marginwidth="0" allowtransparency="true"></iframe>';
     } else {
         $t = '<a href="'.$url.'" target="_blank">Bitcoin</a>';
     }
@@ -56,6 +45,47 @@ function bitcoin_button_shortcode_handler($atts) {
 	return $t;
 }
 add_shortcode('bitcoin', 'bitcoin_button_shortcode_handler');
+
+
+/* Generate widget */
+function bitcoin_button_generate_widget() {
+    global $wpdb;
+
+    /* Generate widget when flag is set */
+    if (!get_query_var('bitcoin_button_widget')) return;
+
+    $code = get_query_var('bitcoin_button_widget');
+    $info = get_query_var('bitcoin_button_info');
+
+    $url = 'https://coinbase.com/checkouts/'.$code;
+
+    $table_name = $wpdb->prefix.'bitcoin_button_coinbase';
+
+    echo '<!doctype html>'.
+        '<html><head>'.
+        '<meta charset="utf-8"/>'.
+        '<title>Bitcoin Button Widget</title>'.
+        '<link rel="stylesheet" href="'.plugins_url('style.css', __FILE__).'"/>'.
+        '</head><body marginwidth="0" marginheight="0">';
+
+    echo '<a id="button" target="_blank" href="'.$url.'">Bitcoin</a>';
+    if ($info == 'received') {
+        $btc = $wpdb->get_var($wpdb->prepare('SELECT IFNULL(SUM(btc), 0) FROM '.$table_name.
+                                             ' WHERE code = %s AND'.
+                                             ' YEAR(ctime) = YEAR(NOW())', $code));
+        $btc = number_format((float)$btc / 100000000, 3, '.', '');
+        echo '<a id="counter" target="_blank" href="'.$url.'">'.$btc.' &#3647;</a>';
+    } else if ($info == 'count') {
+        $count = $wpdb->get_var($wpdb->prepare('SELECT IFNULL(COUNT(*), 0) FROM '.$table_name.
+                                               ' WHERE code = %s AND'.
+                                               ' YEAR(ctime) = YEAR(NOW())', $code));
+        echo '<a id="counter" target="_blank" href="'.$url.'">'.$count.'</a>';
+    }
+
+    echo '</body></html>';
+    exit;
+}
+add_action('template_redirect', 'bitcoin_button_generate_widget');
 
 
 /* Callback handler for coinbase */
