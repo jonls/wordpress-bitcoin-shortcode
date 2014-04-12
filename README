@@ -1,41 +1,33 @@
 
-Bitcoin button plugin
-=====================
+Bitcoin Shortcode plugin
+========================
 
-This Wordpress plugin providing a shortcode for showing links to bitcoin addresses
-which can for example be used as a donation address.
+This Wordpress plugin providing a shortcode for accepting payment of bitcoins
+through a payment processor. Currently Coinbase is supported as a payment
+processor, and an account at Coinbase is required.
 
 Example shortcode:
-[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp"]
+[bitcoin code="81c71f54a9579902c2b0258fc29d368f"]
 
-The shortcode will insert a small button that links to the Bitcoin address. When
-the mouse is hovered over the button a QR code representing the address is shown.
-Further info on the address can be shown to the right of the button. This info is
-fetched from the API at http://blockchain.info/.
+The shortcode will insert a small button that links to the payment page at the
+payment processor. The button is loaded through an iframe to avoid clashes with
+existing style sheets. Further info can be shown to the right of the button in a
+bubble.
 
-To show the number of transactions the address has been used in:
-[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="transaction"]
+To show the number of transactions to the payment page:
+[bitcoin code="81c71f54a9579902c2b0258fc29d368f" info="count"]
 
-To show the amount received by the address:
-[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="received"]
+To show the amount received by the payment page:
+[bitcoin code="81c71f54a9579902c2b0258fc29d368f" info="received"]
 
-To show the current balance of the address:
-[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="balance"]
-
-To show no info other than the address and QR code:
-[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="none"]
-
-URL hints
----------
-The bitcoin URLs can optionally include a label, a message and/or a suggested
-amount to pay. These can be added to the URLs by setting the corresponding
-setting on the shortcode. For example:
-[bitcoin address="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" label="jonls.dk" amount="0.02" message="For donations to my projects"]
+To show no info other than the button:
+[bitcoin code="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="none"]
 
 Widgets
 -------
 It is also possible to use shortcodes in widgets but this requires an additional
-plugin to be installed (e.g http://wordpress.org/extend/plugins/shortcodes-in-sidebar-widgets/).
+plugin to be installed
+(e.g http://wordpress.org/extend/plugins/shortcodes-in-sidebar-widgets/).
 
 Demo
 ----
