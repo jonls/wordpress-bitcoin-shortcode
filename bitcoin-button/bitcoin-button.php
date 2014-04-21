@@ -37,6 +37,7 @@ class Bitcoin_Button {
 		}
 
 		register_activation_hook( __FILE__ , array( $this, 'plugin_install' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array( $this, 'plugin_action_links') );
 
 		$this->coinbase_key = get_option( 'bitcoin_button_coinbase_key', 'MISSING_KEY' );
 	}
@@ -203,6 +204,13 @@ CREATE TABLE $table_name (
 			$key = hash( 'sha1' , $key );
 			add_option( 'bitcoin_button_coinbase_key' , $key );
 		}
+	}
+
+
+	/* Install plugin action links */
+	public function plugin_action_links( $links ) {
+		$links[] = '<a href="' . get_admin_url( null, 'options-general.php?page=bitcoin-button' ) . '">Settings</a>';
+		return $links;
 	}
 
 
