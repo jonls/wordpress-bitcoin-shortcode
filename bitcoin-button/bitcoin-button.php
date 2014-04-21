@@ -38,7 +38,7 @@ class Bitcoin_Button {
 
 		register_activation_hook( __FILE__ , array( $this, 'plugin_install' ) );
 
-		$coinbase_key = get_option( 'bitcoin_button_coinbase_key', 'MISSING_KEY' );
+		$this->coinbase_key = get_option( 'bitcoin_button_coinbase_key', 'MISSING_KEY' );
 	}
 
 	public function load_scripts_init_cb() {
@@ -192,7 +192,7 @@ CREATE TABLE $table_name (
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 		dbDelta( $sql );
 
-		add_option( 'bitcoin_button_db_version', $bitcoin_button_db_version );
+		add_option( 'bitcoin_button_db_version', $this->db_version );
 
 		/* Generate secret key */
 		if ( get_option( 'bitcoin_button_coinbase_key' ) === false ) {
