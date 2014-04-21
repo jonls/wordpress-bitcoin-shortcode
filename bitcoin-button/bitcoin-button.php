@@ -232,7 +232,7 @@ CREATE TABLE $table_name (
 			' as the <strong>Callback URL</strong> in Advanced Options.</li>' .
 			'<li>A page will be generated using your settings. Take note of the alphanumeric code' .
 			' in the page URL and use this code when adding bitcoin buttons' .
-			' using the shortcode (Example: <code>[bitcoin code="81c71f54a9579902c2b0258fc29d368f"]).' .
+			' using the shortcode (Example: <code>[bitcoin code="81c71f54a9579902c2b0258fc29d368f"]</code>).' .
 			'</li></ol>';
 
 		echo '</div>';
