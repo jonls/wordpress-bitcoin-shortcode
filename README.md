@@ -9,37 +9,24 @@ processor, and an account at Coinbase is required.
 Example shortcode:
 
 ```
-[bitcoin code="81c71f54a9579902c2b0258fc29d368f"]
+[bitcoin id="my-widget"]
 ```
 
 The shortcode will insert a small button that links to the payment page at the
 payment processor. The button is loaded through an iframe to avoid clashes with
-existing style sheets. Further info can be shown to the right of the button in a
-bubble.
+existing style sheets. This iframe can also be embedded in external web sites
+that do not use Wordpress. Further info can be shown to the right of the button
+in a bubble.
 
-To show the number of transactions to the payment page:
-
-```
-[bitcoin code="81c71f54a9579902c2b0258fc29d368f" info="count"]
-```
-
-To show the amount received by the payment page:
-
-```
-[bitcoin code="81c71f54a9579902c2b0258fc29d368f" info="received"]
-```
-
-To show no info other than the button:
-
-```
-[bitcoin code="1GRJ6119tmKDUfr8HWR4VaYrvJ6oKns9jp" info="none"]
-```
+Go to the Bitcoin Shortcode settings page to set up widgets. Follow the
+instructions to create a new Coinbase payment page and enter an ID for the
+widget that will be used in the shortcode.
 
 Widgets
 -------
-It is also possible to use shortcodes in widgets but this requires an additional
-plugin to be installed
-(e.g http://wordpress.org/extend/plugins/shortcodes-in-sidebar-widgets/).
+It is also possible to use shortcodes in Wordpress widgets (e.g. in the side
+bar) but this requires an additional plugin to be installed (e.g
+http://wordpress.org/extend/plugins/shortcodes-in-sidebar-widgets/).
 
 Demo
 ----

@@ -16,11 +16,18 @@ Author URI: http://jonls.dk/
 
 class Bitcoin_Button {
 
-	protected $db_version   = '1';
-	protected $coinbase_key = 'MISSING_KEY';
+	protected $db_version = '1';
+	protected $table_name = null;
 
+	protected $coinbase_key     = 'MISSING_KEY';
+	protected $coinbase_widgets = array();
+
+	protected $options_page = null;
 
 	public function __construct() {
+		global $wpdb;
+		$this->table_name = $wpdb->prefix . 'bitcoin_button_coinbase';
+
 		/* User visible section */
 		if ( ! is_admin() ) {
 			add_action( 'init' , array( $this, 'load_scripts_init_cb' ) );
@@ -39,29 +46,33 @@ class Bitcoin_Button {
 		register_activation_hook( __FILE__ , array( $this, 'plugin_install' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array( $this, 'plugin_action_links') );
 
-		$this->coinbase_key = get_option( 'bitcoin_button_coinbase_key', 'MISSING_KEY' );
+		$this->coinbase_key     = get_option( 'bitcoin_button_coinbase_key', 'MISSING_KEY' );
+		$this->coinbase_widgets = get_option( 'bitcoin_button_coinbase_widgets', array() );
 	}
 
 	public function load_scripts_init_cb() {
 		global $wp;
 		$wp->add_query_var( 'bitcoin_button_widget' );
-		$wp->add_query_var( 'bitcoin_button_info' );
 		$wp->add_query_var( 'bitcoin_button_coinbase_cb' );
 	}
 
 
 	/* Shortcode handler for "bitcoin" */
 	public function shortcode_handler( $atts ) {
-		$code = $atts['code'];
-		$url  = 'https://coinbase.com/checkouts/' . $code;
-		$info = isset( $atts['info'] ) ? trim( $atts['info'] ) : 'received';
+		$widget_id = $atts['id'];
+
+		if ( ! isset( $this->coinbase_widgets[ $widget_id ] ) ) {
+			return '<!-- bitcoin shortcode: unknown id -->';
+		}
+
+		$widget = $this->coinbase_widgets[ $widget_id ];
+		$url    = 'https://coinbase.com/checkouts/' . $widget['code'];
 
 		$t = null;
 		if ( ! is_feed() ) {
-			$t = '<iframe src="' . site_url() . '/?bitcoin_button_widget=' . urlencode($code) .
-				'&bitcoin_button_info=' . urlencode($info) . '" width="250" height="24" ' .
-				'frameborder="0" scrolling="no" title="Donate Bitcoin" border="0" ' .
-				'marginheight="0" marginwidth="0" allowtransparency="true"></iframe>';
+			$t = '<iframe src="' . site_url() . '/?bitcoin_button_widget=' . urlencode( $widget_id ) . '"' .
+				' width="250" height="22" frameborder="0" scrolling="no" title="Donate Bitcoin"' .
+				' border="0" marginheight="0" marginwidth="0" allowtransparency="true"></iframe>';
 		} else {
 			$t = '<a href="' . $url . '" target="_blank">Donate Bitcoin</a>';
 		}
@@ -77,12 +88,15 @@ class Bitcoin_Button {
 		/* Generate widget when flag is set */
 		if ( ! get_query_var( 'bitcoin_button_widget' ) ) return;
 
-		$code = get_query_var( 'bitcoin_button_widget' );
-		$info = get_query_var( 'bitcoin_button_info' );
+		$widget_id = get_query_var( 'bitcoin_button_widget' );
 
-		$url = 'https://coinbase.com/checkouts/' . $code;
+		if ( ! isset( $this->coinbase_widgets[ $widget_id ] ) ) {
+			status_header( 404 );
+			exit;
+		}
 
-		$table_name = $wpdb->prefix . 'bitcoin_button_coinbase';
+		$widget = $this->coinbase_widgets[ $widget_id ];
+		$url    = 'https://coinbase.com/checkouts/' . $widget['code'];
 
 		echo '<!doctype html>' .
 			'<html><head>' .
@@ -92,16 +106,16 @@ class Bitcoin_Button {
 			'</head><body marginwidth="0" marginheight="0">';
 
 		echo '<a id="button" target="_blank" href="' . $url . '">Bitcoin</a>';
-		if ($info == 'received') {
-			$btc = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(SUM(btc), 0) FROM ' . $table_name .
+		if ($widget['info'] == 'received') {
+			$btc = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(SUM(btc), 0) FROM ' . $this->table_name .
 							       ' WHERE code = %s AND' .
-							       ' YEAR(ctime) = YEAR(NOW())' , $code ) );
+							       ' YEAR(ctime) = YEAR(NOW())' , $widget['code'] ) );
 			$btc = number_format( (float) $btc / 100000000 , 3 , '.' , '' );
 			echo '<a id="counter" target="_blank" href="' . $url . '">' . $btc . ' &#3647;</a>';
-		} else if ($info == 'count') {
-			$count = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(COUNT(*), 0) FROM ' . $table_name .
+		} else if ($widget['info'] == 'count') {
+			$count = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(COUNT(*), 0) FROM ' . $this->table_name .
 								 ' WHERE code = %s AND' .
-								 ' YEAR(ctime) = YEAR(NOW())', $code ) );
+								 ' YEAR(ctime) = YEAR(NOW())', $widget['code'] ) );
 			echo '<a id="counter" target="_blank" href="' . $url . '">' . $count . '</a>';
 		}
 
@@ -162,12 +176,12 @@ class Bitcoin_Button {
 		$code = $doc['order']['button']['id'];
 
 		/* Insert in database */
-		$table_name = $wpdb->prefix . 'bitcoin_button_coinbase';
-		$wpdb->insert( $table_name , array( 'id'     => $id,
-						    'ctime'  => $ctime,
-						    'btc'    => $btc,
-						    'native' => $native,
-						    'code'   => $code ) );
+		$wpdb->insert( $this->table_name ,
+			       array( 'id'     => $id,
+				      'ctime'  => $ctime,
+				      'btc'    => $btc,
+				      'native' => $native,
+				      'code'   => $code ) );
 
 		exit;
 	}
@@ -177,10 +191,8 @@ class Bitcoin_Button {
 	public function plugin_install() {
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . 'bitcoin_button_coinbase';
-
-		$sql = "
-CREATE TABLE $table_name (
+		$sql = '
+CREATE TABLE ' . $this->table_name . ' (
   id VARCHAR(15) NOT NULL,
   ctime TIMESTAMP NOT NULL,
   btc DECIMAL(20) NOT NULL,
@@ -188,7 +200,7 @@ CREATE TABLE $table_name (
   code VARCHAR(50) NOT NULL,
   UNIQUE KEY id (id),
   KEY code (code, ctime)
-);";
+);';
 
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 		dbDelta( $sql );
@@ -215,58 +227,251 @@ CREATE TABLE $table_name (
 
 
 	/* Setup admin page */
-	public function options_page() {
+	public function create_options_page() {
+		/* Create actual options page */
 		echo '<div class="wrap">' .
 			'<h2>Bitcoin Shortcode</h2>' .
-			'<form method="post" action="options.php">';
-		settings_fields( 'coinbase' );
-		do_settings_sections( 'bitcoin-button' );
-		submit_button();
+			'<form method="post">';
+
+		/* These are required for sortable meta boxes but the form
+		   containing the fields can be anywhere on the page. */
+		wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false);
+		wp_nonce_field( 'closedpostboxes', 'closedpostboxesnonce', false);
+
 		echo '</form>';
 
-		echo '<h3>Instructions</h3>';
+		echo '<div id="poststuff">' .
+			'<div id="post-body" class="metabox-holder columns-2">';
+
+		echo '<div id="postbox-container-1" class="postbox-container">';
+		do_meta_boxes( '', 'side', null );
+		echo '</div>';
+
+		echo '<div id="postbox-container-2" class="postbox-container">';
+		do_meta_boxes( '', 'normal', null );
+		echo '</div>';
+
+		echo '</div></div></div>';
+	}
+
+	public function admin_menu() {
+		/* Create options page */
+		$this->options_page = add_options_page( 'Bitcoin Shortcode' ,
+							'Bitcoin Shortcode' ,
+							'manage_options' ,
+							'bitcoin-button' ,
+							array( $this, 'create_options_page' ) );
+
+		/* Actions when loading options page */
+		add_action( 'load-' . $this->options_page,
+			    array( $this, 'add_options_meta_boxes' ) );
+		add_action( 'admin_footer-' . $this->options_page,
+			    array( $this, 'add_options_footer' ) );
+
+		/* Actions for generating meta boxes */
+		add_action( 'add_meta_boxes_' . $this->options_page,
+			    array( $this, 'create_options_meta_boxes') );
+	}
+
+	public function add_options_meta_boxes() {
+		/* See if any options were posted */
+		if ( ! empty( $_POST ) ||
+		     isset( $_GET['action'] ) ) {
+			if ( isset( $_REQUEST['action'] ) &&
+			     $_REQUEST['action'] == 'add-coinbase-widget' &&
+			     check_admin_referer( 'add-coinbase-widget', 'add-coinbase-widget-nonce' ) &&
+			     isset( $_REQUEST['widget-id'] ) &&
+			     isset( $_REQUEST['widget-code'] ) &&
+			     isset( $_REQUEST['widget-info'] ) ) {
+
+				/* Add new coinbase widget */
+				$widget_id   = $_REQUEST['widget-id'];
+				$widget_code = $_REQUEST['widget-code'];
+				$widget_info = $_REQUEST['widget-info'];
+
+				if ( ! isset( $this->coinbase_widgets[$widget_id] ) ) {
+					$this->coinbase_widgets[$widget_id] = array( 'code' => $widget_code,
+										     'info' => $widget_info );
+					update_option( 'bitcoin_button_coinbase_widgets',
+						       $this->coinbase_widgets );
+				}
+			} else if ( isset( $_REQUEST['action'] ) &&
+				    $_REQUEST['action'] == 'delete-coinbase-widget' &&
+				    check_admin_referer( 'delete-coinbase-widget', 'delete-coinbase-widget-nonce' ) &&
+				    isset( $_REQUEST['widget-id'] ) ) {
+
+				/* Delete existing coinbase widget */
+				$widget_id = $_REQUEST['widget-id'];
+
+				if ( isset( $this->coinbase_widgets[$widget_id] ) ) {
+					unset( $this->coinbase_widgets[$widget_id] );
+					update_option( 'bitcoin_button_coinbase_widgets',
+						       $this->coinbase_widgets );
+				}
+			}
+
+			wp_redirect( admin_url( 'options-general.php?page=bitcoin-button' ) );
+			exit;
+		}
+
+		/* Add the actual options page content */
+		do_action( 'add_meta_boxes_' . $this->options_page, null );
+		do_action( 'add_meta_boxes', $this->options_page, null );
+
+		wp_enqueue_script( 'postbox' );
+
+		add_screen_option( 'layout_columns', array( 'max' => 2, 'default' => 2) );
+	}
+
+	public function add_options_footer() {
+		echo '<script>jQuery(document).ready(function(){postboxes.add_postbox_toggles(pagenow);});</script>';
+	}
+
+	public function create_options_meta_boxes() {
+		/* Main */
+		add_meta_box( 'coinbase-widgets',
+			      'Coinbase Widgets',
+			      array( $this, 'coinbase_widgets_meta_box' ),
+			      $this->options_page,
+			      'normal' );
+		add_meta_box( 'transactions',
+			      'Transactions',
+			      array( $this, 'transactions_meta_box' ),
+			      $this->options_page,
+			      'normal' );
+		add_meta_box( 'external-embed',
+			      'Embed widgets externally',
+			      array( $this, 'external_embed_meta_box' ),
+			      $this->options_page,
+			      'normal' );
+
+		/* Side */
+		add_meta_box( 'support-info',
+			      'Support',
+			      array( $this, 'support_info_meta_box' ),
+			      $this->options_page,
+			      'side' );
+	}
+
+	public function coinbase_widgets_meta_box() {
 		echo '<ol><li>Go to <a target="_blank" href="https://coinbase.com/merchant_tools?link_type=hosted">' .
 			'Coinbase Merchant Tools</a> and create a payment page for donations.</li>' .
 			'<li>Use <code>' . site_url() . '/?bitcoin_button_coinbase_cb=' .
 			urlencode( get_option( 'bitcoin_button_coinbase_key' ) ) . '</code>' .
 			' as the <strong>Callback URL</strong> in Advanced Options.</li>' .
 			'<li>A page will be generated using your settings. Take note of the alphanumeric code' .
-			' in the page URL and use this code when adding bitcoin buttons' .
-			' using the shortcode (Example: <code>[bitcoin code="81c71f54a9579902c2b0258fc29d368f"]</code>).' .
-			'</li></ol>';
+			' in the page URL and add this code in the <strong>code</strong> field below.' .
+			' (Example: <code>81c71f54a9579902c2b0258fc29d368f</code>)</li>' .
+			'<li>Enter a name for your settings in the <strong>id</strong> field that will be used' .
+			' when you add a shortcode (Example: Choose the ID <code>main</code> and use' .
+			' <code>[bitcoin id="main"]</code> to add the widget in a post).</li></ol>';
 
-		echo '</div>';
+		echo '<form method="post"><input type="hidden" name="action" value="add-coinbase-widget"/>';
+
+		wp_nonce_field( 'add-coinbase-widget', 'add-coinbase-widget-nonce' );
+
+		echo '<table style="width:100%;"><tbody>' .
+			'<tr><th scope="col">Id</th>' .
+			'<th scope="col">Code</th>' .
+			'<th scope="col">Info</th>' .
+			'<th scope="col"></th></tr>';
+		foreach ( $this->coinbase_widgets as $key => $widget ) {
+			$delete_args = array( 'page' => 'bitcoin-button',
+					      'action' => 'delete-coinbase-widget',
+					      'widget-id' => $key );
+			$delete_url  = wp_nonce_url( admin_url( 'options-general.php?' . build_query( $delete_args ) ),
+						     'delete-coinbase-widget',
+						     'delete-coinbase-widget-nonce' );
+			echo '<tr><td>' . esc_html( $key ) . '</td>' .
+				'<td>' . esc_html( $widget['code'] ) . '</td>' .
+				'<td>' . esc_html( $widget['info'] ) . '</td>' .
+				'<td><a class="button delete" href="' . $delete_url . '">Delete</a></td></tr>';
+		}
+
+		echo '<tr><td><input style="width:100%;" type="text" name="widget-id"/></td>' .
+			'<td><input style="width:100%;" type="text" name="widget-code"/></td>' .
+			'<td><select style="width:100%;" name="widget-info"><option value="count">Count</option>' .
+			'<option value="received">Received</option></select></td>' .
+			'<td><input class="button button-primary" type="submit" value="Add"/></td></tr>';
+		echo '</tbody></table>';
 	}
 
-	public function admin_menu() {
-		add_options_page( 'Bitcoin Shortcode' ,
-				  'Bitcoin Shortcode' ,
-				  'manage_options' ,
-				  'bitcoin-button' ,
-				  array( $this, 'options_page' ) );
+	public function transactions_meta_box() {
+		global $wpdb;
+
+		echo '<table style="width:100%;"><tbody>' .
+			'<tr><th scope="col">Code</th>' .
+			'<th scope="col">Id</th>' .
+			'<th scope="col">Timestamp</th>' .
+			'<th scope="col">Amount</th></tr>';
+		$txs = $wpdb->get_results( 'SELECT id, ctime, btc, code FROM ' . $this->table_name );
+		foreach ( $txs as $tx ) {
+			echo '<tr><td>' . esc_html( $tx->code ) . '</td>' .
+				'<td>' . esc_html( $tx->id ) . '</td>' .
+				'<td>' . esc_html( $tx->ctime ) . '</td>' .
+				'<td>' . esc_html( $tx->btc / 100000 ) . ' m&#3647</td>' .
+				'</tr>';
+		}
+		echo '</tbody></table>';
+	}
+
+	public function support_info_meta_box() {
+		echo '<p>Please consider making a donation if you find this plugin useful.</p>'.
+			'<p><iframe src="http://jonls.dk/?bitcoin_button_widget=main"' .
+			' width="250" height="22" frameborder="0" scrolling="no" title="Donate Bitcoin"' .
+			' border="0" marginheight="0" marginwidth="0" allowtransparency="true"></iframe></p>';
+	}
+
+	public function external_embed_meta_box() {
+		echo '<p>Your widgets can be embedded in any web page by adding' .
+			' the code snippet that is generated after selecting a widget in the list.</p>';
+
+		echo '<table class="form-table"></tbody>' .
+			'<tr><th scope="row"><label for="external-widget-select">Widget</label></th>' .
+			'<td>';
+
+		if ( count( $this->coinbase_widgets ) > 0 ) {
+			echo '<select id="external-widget-select">';
+			foreach ( $this->coinbase_widgets as $key => $widget ) {
+				echo '<option name="' . esc_attr( $key ) . '">' . esc_html( $key ) . '</option>';
+			}
+			echo '</select>';
+		} else {
+			echo '<select id="external-widget-select" disabled="disabled"><option>Add a widget first</option></select>';
+		}
+
+		echo '<tr><th scope="row"><label for="external-widget-snippet">Code snippet</label></th>' .
+			'<td><textarea class="large-text code" id="external-widget-snippet" readonly="readonly"' .
+			' rows="5" style="width:100%;"></textarea></td></tr>';
+
+		echo '</td></tr></tbody></table>';
+
+		/* Generate snippet for external embedding */
+		echo '<script>jQuery(document).ready(function(){' .
+			'function update_snippet(widget) {' .
+			'jQuery("#external-widget-snippet").val("' .
+			'<iframe src=\"http://jonls.dk/?bitcoin_button_widget="+encodeURIComponent(widget)+"\"' .
+			' width=\"250\" height=\"22\" frameborder=\"0\" scrolling=\"no\"' .
+			' title=\"Donate Bitcoin\" border=\"0\" marginheight=\"0\" marginwidth=\"0\"' .
+			' allowtransparency=\"true\"></iframe>");}' .
+			'jQuery("#external-widget-select").change(function(){' .
+			'update_snippet(jQuery(this).val());});' .
+			'if (jQuery("#external-widget-select").is(":enabled")) {' .
+			'update_snippet(jQuery("#external-widget-select").val());}});</script>';
 	}
 
 	public function admin_init() {
-		register_setting( 'coinbase' ,
+		register_setting( 'coinbase',
 				  'bitcoin_button_coinbase_key' );
-		add_settings_section( 'coinbase' ,
-				      'Coinbase' ,
+		add_settings_section( 'coinbase',
+				      'Coinbase',
 				      array( $this, 'coinbase_section_info' ) ,
 				      'bitcoin-button' );
-		add_settings_field( 'coinbase_key' ,
-				    'Secret Key' ,
+		add_settings_field( 'coinbase_key',
+				    'Secret Key',
 				    array( $this, 'coinbase_key_field' ) ,
-				    'bitcoin-button' ,
+				    'bitcoin-button',
 				    'coinbase' );
-	}
-
-	public function coinbase_section_info() {
-		echo 'Secret key to be used in callbacks from Coinbase (autogenerated):';
-	}
-
-	public function coinbase_key_field() {
-		echo '<textarea class="large-text code" id="coinbase_key" name="bitcoin_button_coinbase_key">' .
-			esc_textarea( get_option( 'bitcoin_button_coinbase_key' ) ) . '</textarea>';
 	}
 }
 
