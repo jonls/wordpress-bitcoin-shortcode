@@ -274,6 +274,8 @@ CREATE TABLE ' . $this->table_name . ' (
 	}
 
 	public function add_options_meta_boxes() {
+		global $wpdb;
+
 		/* See if any options were posted */
 		if ( ! empty( $_POST ) ||
 		     isset( $_GET['action'] ) ) {
@@ -307,6 +309,44 @@ CREATE TABLE ' . $this->table_name . ' (
 					unset( $this->coinbase_widgets[$widget_id] );
 					update_option( 'bitcoin_button_coinbase_widgets',
 						       $this->coinbase_widgets );
+				}
+			} else if ( isset( $_REQUEST['action'] ) &&
+				    $_REQUEST['action'] == 'add-transaction' &&
+				    check_admin_referer( 'add-transaction', 'add-transaction-nonce' ) &&
+				    isset( $_REQUEST['transaction-code'] ) &&
+				    isset( $_REQUEST['transaction-id'] ) &&
+				    isset( $_REQUEST['transaction-time'] ) &&
+				    isset( $_REQUEST['transaction-amount'] ) ) {
+
+				/* Add transaction manually */
+				$code = trim( $_REQUEST['transaction-code'] );
+				$id = trim( $_REQUEST['transaction-id'] );
+				$ctime = trim( $_REQUEST['transaction-time'] );
+				$btc = floatval( $_REQUEST['transaction-amount'] ) * 100000;
+				$native = 0;
+
+				if ( strlen( $code ) > 0 &&
+				     strlen( $id ) > 0 &&
+				     strlen( $ctime ) > 0 &&
+				     $btc > 0 ) {
+					$wpdb->insert( $this->table_name,
+						       array( 'id'     => $id,
+							      'ctime'  => $ctime,
+							      'btc'    => $btc,
+							      'native' => $native,
+							      'code'   => $code ) );
+				}
+			} else if ( isset( $_REQUEST['action'] ) &&
+				    $_REQUEST['action'] == 'delete-transaction' &&
+				    check_admin_referer( 'delete-transaction', 'delete-transaction-nonce' ) &&
+				    isset( $_REQUEST['transaction-id'] ) ) {
+
+				/* Delete transaction */
+				$id = trim( $_REQUEST['transaction-id'] );
+
+				if ( strlen( $id ) > 0 ) {
+					$wpdb->delete( $this->table_name,
+						       array( 'id' => $id ) );
 				}
 			}
 
@@ -409,20 +449,39 @@ CREATE TABLE ' . $this->table_name . ' (
 	public function transactions_meta_box() {
 		global $wpdb;
 
+		echo '<form method="post"><input type="hidden" name="action" value="add-transaction"/>';
+
+		wp_nonce_field( 'add-transaction', 'add-transaction-nonce' );
+
 		echo '<table style="width:100%;"><tbody>' .
 			'<tr><th scope="col">Code</th>' .
 			'<th scope="col">Id</th>' .
 			'<th scope="col">Timestamp</th>' .
-			'<th scope="col">Amount</th></tr>';
-		$txs = $wpdb->get_results( 'SELECT id, ctime, btc, code FROM ' . $this->table_name );
+			'<th scope="col">Amount</th>' .
+			'<th scope="col"></th></tr>';
+		$txs = $wpdb->get_results( 'SELECT id, ctime, btc, code FROM ' . $this->table_name .
+					   ' ORDER BY ctime DESC');
 		foreach ( $txs as $tx ) {
+			$delete_args = array( 'page' => 'bitcoin-button',
+					      'action' => 'delete-transaction',
+					      'transaction-id' => $tx->id );
+			$delete_url  = wp_nonce_url( admin_url( 'options-general.php?' . build_query( $delete_args ) ),
+						     'delete-transaction',
+						     'delete-transaction-nonce' );
 			echo '<tr><td>' . esc_html( $tx->code ) . '</td>' .
 				'<td>' . esc_html( $tx->id ) . '</td>' .
 				'<td>' . esc_html( $tx->ctime ) . '</td>' .
 				'<td>' . esc_html( $tx->btc / 100000 ) . ' m&#3647</td>' .
+				'<td><a class="button delete" href="' . $delete_url . '">Delete</a></td>' .
 				'</tr>';
 		}
-		echo '</tbody></table>';
+
+		echo '<tr><td><input style="width:100%;" type="text" name="transaction-code"/></td>' .
+			'<td><input style="width:100%;" type="text" name="transaction-id"/></td>' .
+			'<td><input style="width:100%;" type="text" name="transaction-time"/></td>' .
+			'<td><input style="width:100%;" type="text" name="transaction-amount"/></td>' .
+			'<td><input class="button button-primary" type="submit" value="Add"/></td></tr>' .
+			'</tbody></table>';
 	}
 
 	public function support_info_meta_box() {
