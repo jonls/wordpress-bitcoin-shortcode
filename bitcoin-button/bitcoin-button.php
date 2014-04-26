@@ -370,6 +370,10 @@ CREATE TABLE ' . $this->table_name . ' (
 
 		wp_nonce_field( 'add-coinbase-widget', 'add-coinbase-widget-nonce' );
 
+		$info_options = array( 'count' => 'Count',
+				       'received' => 'Received',
+				       'off' => 'Off' );
+
 		echo '<table style="width:100%;"><tbody>' .
 			'<tr><th scope="col">Id</th>' .
 			'<th scope="col">Code</th>' .
@@ -382,18 +386,24 @@ CREATE TABLE ' . $this->table_name . ' (
 			$delete_url  = wp_nonce_url( admin_url( 'options-general.php?' . build_query( $delete_args ) ),
 						     'delete-coinbase-widget',
 						     'delete-coinbase-widget-nonce' );
+			$widget_info = array_key_exists( $widget['info'], $info_options ) ? $widget['info'] : 'off';
 			echo '<tr><td>' . esc_html( $key ) . '</td>' .
 				'<td>' . esc_html( $widget['code'] ) . '</td>' .
-				'<td>' . esc_html( $widget['info'] ) . '</td>' .
+				'<td>' . esc_html( $info_options[ $widget_info ] ) . '</td>' .
 				'<td><a class="button delete" href="' . $delete_url . '">Delete</a></td></tr>';
 		}
 
 		echo '<tr><td><input style="width:100%;" type="text" name="widget-id"/></td>' .
 			'<td><input style="width:100%;" type="text" name="widget-code"/></td>' .
-			'<td><select style="width:100%;" name="widget-info"><option value="count">Count</option>' .
-			'<option value="received">Received</option></select></td>' .
-			'<td><input class="button button-primary" type="submit" value="Add"/></td></tr>';
-		echo '</tbody></table>';
+			'<td><select style="width:100%;" name="widget-info">';
+
+		foreach ( $info_options as $key => $value ) {
+			echo '<option value="' . esc_attr( $key ) . '">' . esc_html( $value ) . '</option>';
+		}
+
+		echo '</select></td>' .
+			'<td><input class="button button-primary" type="submit" value="Add"/></td></tr>' .
+			'</tbody></table>';
 	}
 
 	public function transactions_meta_box() {
