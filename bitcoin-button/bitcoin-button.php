@@ -241,7 +241,9 @@ CREATE TABLE ' . $this->table_name . ' (
 		echo '</form>';
 
 		echo '<div id="poststuff">' .
-			'<div id="post-body" class="metabox-holder columns-2">';
+			'<div id="post-body" class="metabox-holder columns-' .
+			( ( get_current_screen()->get_columns() == 1 ) ? '1' : '2' ) .
+			'">';
 
 		echo '<div id="postbox-container-1" class="postbox-container">';
 		do_meta_boxes( '', 'side', null );
