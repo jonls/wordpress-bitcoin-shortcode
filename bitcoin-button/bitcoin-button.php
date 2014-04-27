@@ -445,6 +445,7 @@ CREATE TABLE ' . $this->table_name . ' (
 		echo '</select></td>' .
 			'<td><input class="button button-primary" type="submit" value="Add"/></td></tr>' .
 			'</tbody></table>';
+		echo '</form>';
 	}
 
 	public function transactions_meta_box() {
