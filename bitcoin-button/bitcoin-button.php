@@ -372,7 +372,7 @@ CREATE TABLE ' . $this->table_name . ' (
 	public function create_options_meta_boxes() {
 		/* Main */
 		add_meta_box( 'coinbase-widgets',
-			      'Coinbase Widgets',
+			      'Coinbase Setup',
 			      array( $this, 'coinbase_widgets_meta_box' ),
 			      $this->options_page,
 			      'normal' );
