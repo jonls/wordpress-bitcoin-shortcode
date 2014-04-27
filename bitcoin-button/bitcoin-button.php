@@ -40,7 +40,6 @@ class Bitcoin_Button {
 		/* Admin section */
 		if ( is_admin() ) {
 			add_action( 'admin_menu', array( $this, 'admin_menu' ) );
-			add_action( 'admin_init', array( $this, 'admin_init' ) );
 		}
 
 		register_activation_hook( __FILE__ , array( $this, 'plugin_install' ) );
@@ -529,20 +528,6 @@ CREATE TABLE ' . $this->table_name . ' (
 			'update_snippet(jQuery(this).val());});' .
 			'if (jQuery("#external-widget-select").is(":enabled")) {' .
 			'update_snippet(jQuery("#external-widget-select").val());}});</script>';
-	}
-
-	public function admin_init() {
-		register_setting( 'coinbase',
-				  'bitcoin_button_coinbase_key' );
-		add_settings_section( 'coinbase',
-				      'Coinbase',
-				      array( $this, 'coinbase_section_info' ) ,
-				      'bitcoin-button' );
-		add_settings_field( 'coinbase_key',
-				    'Secret Key',
-				    array( $this, 'coinbase_key_field' ) ,
-				    'bitcoin-button',
-				    'coinbase' );
 	}
 }
 
