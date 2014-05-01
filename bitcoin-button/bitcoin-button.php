@@ -521,7 +521,7 @@ CREATE TABLE ' . $this->table_name . ' (
 		echo '<script>jQuery(document).ready(function(){' .
 			'function update_snippet(widget) {' .
 			'jQuery("#external-widget-snippet").val("' .
-			'<iframe src=\"http://jonls.dk/?bitcoin_button_widget="+encodeURIComponent(widget)+"\"' .
+			'<iframe src=\"' . esc_url( site_url() ) . '/?bitcoin_button_widget="+encodeURIComponent(widget)+"\"' .
 			' width=\"250\" height=\"22\" frameborder=\"0\" scrolling=\"no\"' .
 			' title=\"Donate Bitcoin\" border=\"0\" marginheight=\"0\" marginwidth=\"0\"' .
 			' allowtransparency=\"true\"></iframe>");}' .
