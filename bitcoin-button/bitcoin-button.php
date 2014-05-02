@@ -479,11 +479,13 @@ CREATE TABLE ' . $this->table_name . ' (
 			echo '<select id="external-widget-select" disabled="disabled"><option>Add a widget first</option></select>';
 		}
 
+		echo '</td></tr>';
+
 		echo '<tr><th scope="row"><label for="external-widget-snippet">Code snippet</label></th>' .
 			'<td><textarea class="large-text code" id="external-widget-snippet" readonly="readonly"' .
 			' rows="5" style="width:100%;"></textarea></td></tr>';
 
-		echo '</td></tr></tbody></table>';
+		echo '</tbody></table>';
 
 		/* Generate snippet for external embedding */
 		echo '<script>jQuery(document).ready(function(){' .
