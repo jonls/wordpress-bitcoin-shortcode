@@ -117,15 +117,6 @@ class Coinbase_Backend {
 
 			$this->plugin->add_widget( $widget_id, self::$id, $widget_info,
 						   array( 'code' => $widget_code ) );
-		} else if ( isset( $_REQUEST['action'] ) &&
-			    $_REQUEST['action'] == 'delete-widget' &&
-			    check_admin_referer( 'delete-widget', 'delete-widget-nonce' ) &&
-			    isset( $_REQUEST['widget-id'] ) ) {
-
-			/* Delete existing coinbase widget */
-			$widget_id = $_REQUEST['widget-id'];
-
-			$this->plugin->delete_widget( $widget_id );
 		}
 	}
 
@@ -153,37 +144,22 @@ class Coinbase_Backend {
 				       'received' => 'Received',
 				       'off' => 'Off' );
 
-		echo '<table style="width:100%;"><tbody>' .
-			'<tr><th scope="col">Id</th>' .
-			'<th scope="col">Code</th>' .
-			'<th scope="col">Info</th>' .
-			'<th scope="col"></th></tr>';
-		foreach ( $this->plugin->get_widgets( self::$id ) as $key => $widget ) {
-			$delete_args = array( 'page' => 'bitcoin-button',
-					      'backend' => self::$id,
-					      'action' => 'delete-widget',
-					      'widget-id' => $key );
-			$delete_url  = wp_nonce_url( admin_url( 'options-general.php?' . build_query( $delete_args ) ),
-						     'delete-widget',
-						     'delete-widget-nonce' );
-			$widget_info = array_key_exists( $widget['info'], $info_options ) ? $widget['info'] : 'off';
-			echo '<tr><td>' . esc_html( $key ) . '</td>' .
-				'<td>' . esc_html( $widget['data']['code'] ) . '</td>' .
-				'<td>' . esc_html( $info_options[ $widget_info ] ) . '</td>' .
-				'<td><a class="button delete" href="' . $delete_url . '">Delete</a></td></tr>';
-		}
-
-		echo '<tr><td><input style="width:100%;" type="text" name="widget-id"/></td>' .
-			'<td><input style="width:100%;" type="text" name="widget-code"/></td>' .
-			'<td><select style="width:100%;" name="widget-info">';
+		echo '<table class="form-table"><tbody>' .
+			'<tr><th scope="row"><label for="coinbase-widget-id">Widget ID</label></th>' .
+			'<td><input style="width:100%;" type="text" id="coinbase-widget-id"' .
+			' name="widget-id" placeholder="my-widget"/></td></tr>' .
+			'<tr><th scope="row"><label for="coinbase-widget-code">Code</label></th>' .
+			'<td><input style="width:100%;" type="text" id="coinbase-widget-code"' .
+			' name="widget-code" placeholder="81c71f54a9579902c2b0258fc29d368f"/></td></tr>' .
+			'<tr><th score="row"><label for="coinbase-widget-info">Info</label></th>' .
+			'<td><select id="coinbase-widget-info" name="widget-info">';
 
 		foreach ( $info_options as $key => $value ) {
 			echo '<option value="' . esc_attr( $key ) . '">' . esc_html( $value ) . '</option>';
 		}
 
-		echo '</select></td>' .
-			'<td><input class="button button-primary" type="submit" value="Add"/></td></tr>' .
-			'</tbody></table>';
-		echo '</form>';
+		echo '</select></td></tr>' .
+			'<tr><th scope="row"></th><td><input class="button button-primary" type="submit" value="Add widget"/></td></tr>';
+		echo '</tbody></table></form>';
 	}
 }
