@@ -120,7 +120,7 @@ class Bitcoin_Button {
 			'<html><head>' .
 			'<meta charset="utf-8"/>' .
 			'<title>Bitcoin Button Widget</title>'.
-			'<link rel="stylesheet" href="' . plugins_url( 'style.css' , __FILE__ ) . '"/>' .
+			'<link rel="stylesheet" href="' . plugins_url( 'style/compact.css' , __FILE__ ) . '"/>' .
 			'</head><body marginwidth="0" marginheight="0">';
 
 		echo '<a id="button" target="_blank" href="' . $url . '">Bitcoin</a>';
