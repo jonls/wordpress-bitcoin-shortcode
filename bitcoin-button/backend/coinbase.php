@@ -159,7 +159,7 @@ class Coinbase_Backend {
 		}
 
 		echo '</select></td></tr>' .
-			'<tr><th scope="row"></th><td><input class="button button-primary" type="submit" value="Add widget"/></td></tr>';
+			'<tr><th scope="row"></th><td><input class="button button-primary" type="submit" value="Create widget"/></td></tr>';
 		echo '</tbody></table></form>';
 	}
 }
