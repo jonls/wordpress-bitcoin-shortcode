@@ -256,7 +256,7 @@ CREATE TABLE ' . $this->table_name . ' (
 			'<td><input style="width:100%;" type="text" name="transaction-time"/></td>' .
 			'<td><input style="width:100%;" type="text" name="transaction-amount"/></td>' .
 			'<td style="width:1px;"><input class="button button-primary" type="submit" value="Add"/></td></tr>' .
-			'</tbody></table>';
+			'</tbody></table></form>';
 	}
 
 	protected function create_widgets_table() {
