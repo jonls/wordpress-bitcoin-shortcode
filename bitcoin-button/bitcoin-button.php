@@ -246,7 +246,7 @@ CREATE TABLE ' . $this->table_name . ' (
 			echo '<tr><td>' . esc_html( $tx->code ) . '</td>' .
 				'<td>' . esc_html( $tx->id ) . '</td>' .
 				'<td>' . esc_html( $tx->ctime ) . '</td>' .
-				'<td>' . esc_html( $tx->btc / 100000 ) . ' m&#3647</td>' .
+				'<td>' . esc_html( number_format( (float) $tx->btc / 100 , 2 , '.' , ' ' ) ) . ' &#181;&#3647;</td>' .
 				'<td style="width:1px;"><a class="button delete" href="' . $delete_url . '">Delete</a></td>' .
 				'</tr>';
 		}
@@ -374,7 +374,7 @@ CREATE TABLE ' . $this->table_name . ' (
 				$code = trim( $_REQUEST['transaction-code'] );
 				$id = trim( $_REQUEST['transaction-id'] );
 				$ctime = trim( $_REQUEST['transaction-time'] );
-				$btc = floatval( $_REQUEST['transaction-amount'] ) * 100000;
+				$btc = floatval( $_REQUEST['transaction-amount'] ) * 100;
 				$native = 0;
 
 				if ( strlen( $code ) > 0 &&
