@@ -24,6 +24,7 @@ class Bitcoin_Button {
 
 	protected $widgets  = array();
 	protected $backends = array();
+	protected $styles   = array();
 
 	protected $options_page = null;
 
@@ -49,6 +50,10 @@ class Bitcoin_Button {
 		add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array( $this, 'plugin_action_links') );
 
 		$this->widgets = get_option( 'bitcoin_button_widgets', array() );
+		$this->styles = get_option( 'bitcoin_button_styles', array() );
+
+		/* Load styles not already loaded */
+		if ( count( $this->styles ) == 0 ) $this->scan_widget_styles();
 
 		/* Load backends */
 		$this->backends[ Coinbase_Backend::$id ] = new Coinbase_Backend( $this );
@@ -61,8 +66,11 @@ class Bitcoin_Button {
 
 
 	public function generate_widget_iframe( $widget_id ) {
+		$style_id = isset( $widget_id['style']['id'] ) ? $widget_id['style']['id'] : 'compact.css';
+		$style    = $this->styles[ $style_id ];
 		return '<iframe src="' . site_url() . '/?bitcoin_button_widget=' . urlencode( $widget_id ) . '"' .
-			' width="250" height="22" frameborder="0" scrolling="no" title="Donate Bitcoin"' .
+			' width="' . $style['width'] . '" height="' . $style['height']. '" frameborder="0"' .
+			' scrolling="no" title="Donate Bitcoin"' .
 			' border="0" marginheight="0" marginwidth="0" allowtransparency="true"></iframe>';
 	}
 
@@ -118,25 +126,30 @@ class Bitcoin_Button {
 		$url        = $backend->get_payment_url( $widget['data'] );
 		$code       = $backend->get_transaction_code( $widget['data'] );
 
+		$style_id   = isset( $widget['style']['id'] ) ? $widget['style']['id'] : 'compact.css';
+		$style      = $this->styles[ $style_id ];
+
 		echo '<!doctype html>' .
 			'<html><head>' .
 			'<meta charset="utf-8"/>' .
-			'<title>Bitcoin Button Widget</title>'.
-			'<link rel="stylesheet" href="' . plugins_url( 'style/compact.css' , __FILE__ ) . '"/>' .
+			'<title>Bitcoin Button Widget</title>' .
+			'<link rel="stylesheet" href="' . plugins_url( 'style/' . $style_id, __FILE__ ) . '"/>' .
 			'</head><body marginwidth="0" marginheight="0">';
 
-		echo '<a id="button" target="_blank" href="' . $url . '">Bitcoin</a>';
-		if ($widget['info'] == 'received') {
+		echo '<a id="button" target="_blank" href="' . $url . '"><span id="button-text">Bitcoin</span></a>';
+		if ( $widget['info'] == 'received' ) {
 			$amount = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(SUM(amount), 0) FROM ' . $this->table_name .
 								  ' WHERE backend = %s AND code = %s AND' .
 								  ' YEAR(ctime) = YEAR(NOW())' , $backend_id, $code ) );
 			$amount = number_format( (float) $amount / 100000000 , 3 , '.' , '' );
-			echo '<a id="counter" target="_blank" href="' . $url . '">' . $amount . ' &#3647;</a>';
-		} else if ($widget['info'] == 'count') {
+			echo '<a id="counter" target="_blank" href="' . $url . '">' .
+				'<span id="counter-text">' . $amount . ' &#3647;</span></a>';
+		} else if ( $widget['info'] == 'count' ) {
 			$count = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(COUNT(*), 0) FROM ' . $this->table_name .
 								 ' WHERE backend = %s AND code = %s AND' .
 								 ' YEAR(ctime) = YEAR(NOW())', $backend_id, $code ) );
-			echo '<a id="counter" target="_blank" href="' . $url . '">' . $count . '</a>';
+			echo '<a id="counter" target="_blank" href="' . $url . '">' .
+				'<span id="counter-text">' . $count . '</span></a>';
 		}
 
 		echo '</body></html>';
@@ -184,6 +197,41 @@ CREATE TABLE ' . $this->table_name . ' (
 	public function plugin_action_links( $links ) {
 		$links[] = '<a href="' . get_admin_url( null, 'options-general.php?page=bitcoin-button' ) . '">Settings</a>';
 		return $links;
+	}
+
+
+	/* Scan for widget style files */
+	protected function scan_widget_styles() {
+		$this->styles = array();
+
+		$style_dir = plugin_dir_path( __FILE__ ) . 'style';
+		$dh        = opendir( $style_dir );
+		if ( ! $dh ) return;
+
+		while ( true ) {
+			$entry = readdir( $dh );
+			if ( $entry === false ) break;
+
+			$entry_path = $style_dir . '/' . $entry;
+
+			if ( ! is_file( $entry_path ) ) continue;
+
+			$metadata = get_file_data( $entry_path,
+						   array( 'name' => 'Name',
+							  'width' => 'Width',
+							  'height' => 'Height' ) );
+			if ( isset( $metadata['name'] ) &&
+			     isset( $metadata['width'] ) &&
+			     isset( $metadata['height'] ) ) {
+				$this->styles[ $entry ] = array(
+					'name' => $metadata['name'],
+					'width' => intval( $metadata['width'] ),
+					'height' => intval( $metadata['height'] ) );
+			}
+		}
+
+		update_option( 'bitcoin_button_styles',
+			       $this->styles );
 	}
 
 
@@ -433,6 +481,7 @@ CREATE TABLE ' . $this->table_name . ' (
 			'<tr><th scope="col">Id</th>' .
 			'<th scope="col">Backend</th>' .
 			'<th scope="col">Info</th>' .
+			'<th scope="col">Style</th>' .
 			'<th scope="col" style="width:1px;"></th></tr>';
 		foreach ( $this->widgets as $key => $widget ) {
 			$delete_args = array( 'page' => 'bitcoin-button',
@@ -442,9 +491,18 @@ CREATE TABLE ' . $this->table_name . ' (
 						     'delete-widget',
 						     'delete-widget-nonce' );
 			$widget_info = array_key_exists( $widget['info'], $info_options ) ? $widget['info'] : 'off';
+
+			$widget_style = '(unknown)';
+			if ( isset( $this->styles[ $widget['style']['id'] ] ) ) {
+				$style = $this->styles[ $widget['style']['id'] ];
+				$widget_style = sprintf( '%s (%dx%d)', $style['name'],
+							 $style['width'], $style['height'] );
+			}
+
 			echo '<tr><td>' . esc_html( $key ) . '</td>' .
 				'<td>' . esc_html( $widget['backend'] ) . '</td>' .
 				'<td>' . esc_html( $info_options[ $widget_info ] ) . '</td>' .
+				'<td>' . esc_html( $widget_style ) . '</td>' .
 				'<td style="width:1px;"><a class="button delete" href="' . $delete_url . '">Delete</a></td></tr>';
 		}
 
@@ -475,7 +533,8 @@ CREATE TABLE ' . $this->table_name . ' (
 		if ( ! isset( $this->widgets[ $widget_id ] ) ) {
 			$this->widgets[ $widget_id ] = array( 'backend' => $backend_id,
 							      'info' => $info,
-							      'data' => $data );
+							      'data' => $data,
+							      'style' => array( 'id' => 'compact.css' ) );
 			update_option( 'bitcoin_button_widgets',
 				       $this->widgets );
 		}
@@ -582,6 +641,23 @@ CREATE TABLE ' . $this->table_name . ' (
 
 				wp_redirect( admin_url( 'options-general.php?page=bitcoin-button&section=widgets' ) );
 				exit;
+			} else if ( isset( $_REQUEST['action'] ) &&
+				    $_REQUEST['action'] == 'edit-style' &&
+				    check_admin_referer( 'edit-style', 'edit-style-nonce' ) &&
+				    isset( $_REQUEST['widget-id'] ) &&
+				    isset( $_REQUEST['widget-style'] ) ) {
+
+				/* Edit widget style */
+				$widget_id    = $_REQUEST['widget-id'];
+				$widget_style = $_REQUEST['widget-style'];
+
+				if ( isset( $this->widgets[ $widget_id ] ) &&
+				     isset( $this->styles[ $widget_style ] ) ) {
+					$this->widgets[ $widget_id ]['style'] =
+						array( 'id' => $widget_style );
+					update_option( 'bitcoin_button_widgets',
+						       $this->widgets );
+				}
 			}
 
 			wp_redirect( admin_url( 'options-general.php?page=bitcoin-button' ) );
@@ -618,6 +694,11 @@ CREATE TABLE ' . $this->table_name . ' (
 			      array( $this, 'external_embed_meta_box' ),
 			      $this->options_page,
 			      'normal' );
+		add_meta_box( 'widget-style',
+			      'Widget Style',
+			      array( $this, 'widget_style_meta_box' ),
+			      $this->options_page,
+			      'normal' );
 
 		/* Side */
 		add_meta_box( 'plugin-info',
@@ -635,6 +716,57 @@ CREATE TABLE ' . $this->table_name . ' (
 			'<p><iframe src="http://jonls.dk/?bitcoin_button_widget=main"' .
 			' width="250" height="22" frameborder="0" scrolling="no" title="Donate Bitcoin"' .
 			' border="0" marginheight="0" marginwidth="0" allowtransparency="true"></iframe></p>';
+	}
+
+	public function widget_style_meta_box() {
+		$this->scan_widget_styles();
+
+		echo '<p>Assign a style to a widget to change how it looks.</p>';
+
+		echo '<form method="post">' .
+			'<input type="hidden" name="action" value="edit-style"/>';
+
+		wp_nonce_field( 'edit-style', 'edit-style-nonce' );
+
+		echo '<table class="form-table"><tbody>' .
+			'<tr><th scope="row"><label for="style-widget-select">Widget</label></th>' .
+			'<td>';
+
+		if ( count( $this->widgets ) > 0 ) {
+			echo '<select id="style-widget-select" name="widget-id">';
+			foreach ( $this->widgets as $key => $widget ) {
+				echo '<option value="' . esc_attr( $key ) . '">' . esc_html( $key ) . '</option>';
+			}
+			echo '</select>';
+		} else {
+			echo '<select id="style-widget-select" disabled="disabled">' .
+				'<option value="">Add a widget first</option></select>';
+		}
+
+		echo '</td></tr>';
+
+		echo '<tr><th scope="row"><label for="style-widget-style">Style</label></th>' .
+			'<td>';
+
+		if ( count( $this->styles ) > 0 ) {
+			echo '<select id="style-widget-style" name="widget-style">';
+			foreach ( $this->styles as $key => $style ) {
+				$text = sprintf( '%s (%dx%d)', $style['name'],
+						 $style['width'], $style['height'] );
+				echo '<option value="' . esc_attr( $key ) . '">' . esc_html( $text ) . '</option>';
+			}
+			echo '</select>';
+		} else {
+			echo '<select id="style-widget-style" disabled="disabled">' .
+				'<option value="">No style found</option></select>';
+		}
+
+		echo '</td></tr>' .
+			'<tr><th scope="row"></th><td><input class="button button-primary" type="submit" value="Save style"/></td></tr>';
+
+
+		echo '</tbody></table>';
+		echo '</form>';
 	}
 
 	public function external_embed_meta_box() {
