@@ -173,6 +173,15 @@ CREATE TABLE ' . $this->table_name . ' (
 
 	/* Setup admin page */
 	public function create_options_page() {
+		if ( $_GET['section'] == 'transactions' ) {
+			$this->create_transactions_section();
+		} else {
+			$this->create_main_section();
+		}
+	}
+
+	/* Create main section, the main options page */
+	protected function create_main_section() {
 		/* Create options page */
 		echo '<div class="wrap">' .
 			'<h2>Bitcoin Shortcode</h2>' .
@@ -196,7 +205,13 @@ CREATE TABLE ' . $this->table_name . ' (
 			'<br class="clear"/>' .
 			'<div id="overview-transactions" class="inside">';
 
-		$this->create_transactions_table();
+		$this->create_transactions_chart( 'count' );
+
+		$args = array( 'page' => 'bitcoin-button',
+			       'section' => 'transactions' );
+		echo '<p style="text-align:right;"><a href="' .
+			esc_url( admin_url( 'options-general.php?' . build_query( $args ) ) ) .
+			'">Transaction list</a></p>';
 
 		echo'</div><div id="overview-widgets" class="hidden inside">';
 
@@ -219,6 +234,99 @@ CREATE TABLE ' . $this->table_name . ' (
 		echo '</div>';
 
 		echo '</div></div></div>';
+	}
+
+	/* Create transactions section */
+	protected function create_transactions_section() {
+		/* Create options page */
+		echo '<div class="wrap">' .
+			'<h2>Transactions</h2>';
+
+		$args = array( 'page' => 'bitcoin-button' );
+		echo '<p><a href="' . esc_url( admin_url( 'options-general.php?' . build_query( $args ) ) ) .
+			'">Back to options</a></p>';
+
+		echo '<div class="postbox"><div id="transactions" class="inside">';
+
+		$this->create_transactions_table();
+
+		echo '</div></div></div>';
+	}
+
+	protected function create_transactions_chart( $info='count' ) {
+		global $wpdb;
+
+		date_default_timezone_set( 'UTC' );
+
+		echo '<svg xmlns="http://www.w3.org/2000/svg" id="transaction-stats"' .
+			' style="width:100%;height:200px;">' .
+			'<style>.stat-bar { fill: #2ea2cc; } .stat-bar:hover { fill: #0074a2; }' .
+			' .x-label { text-anchor: middle; font-size: 0.8em; }' .
+			' .y-label { text-anchor: end; alignment-baseline: middle; font-size: 0.8em; }</style>';
+
+		/* Collect data points */
+		$max_y = 1;
+		$days = $wpdb->get_results( 'SELECT COUNT(*) AS count, SUM(btc) AS btc, DATE(ctime) AS day,' .
+					    '  DATEDIFF(NOW(), DATE(ctime)) AS datediff FROM ' . $this->table_name .
+					    ' GROUP BY day HAVING datediff < 30 ORDER BY day ASC' );
+		$data = array();
+		foreach ( $days as $day ) {
+			$p = array( 'index' => $day->datediff,
+				    'text' => $day->day );
+			if ( $info == 'btc' ) {
+				$p['value'] = $day->btc / 100;
+			} else {
+				$p['value'] = $day->count;
+			}
+			$data[] = $p;
+
+			if ( $p['value'] > $max_y ) $max_y = $p['value'];
+		}
+
+		/* Find maximum y and step between horizontal lines */
+		$step_y = pow( 10, floor( log10( $max_y ) ) );
+		$step_count = ceil( (float) $max_y / $step_y );
+		if ( $step_count < 4 && $step_y >= 2 ) {
+			$step_y /= 2;
+			$step_count *= 2;
+		}
+		$max_y =  $step_count * $step_y;
+
+		/* Create embedded svg that will stretch to full size of canvas */
+		echo '<svg x="5%" y="5%" width="95%" height="85%"' .
+			' viewBox="0 0 30 100" preserveAspectRatio="none">' .
+			'<g transform="matrix(1 0 0 -1 0 100)">';
+
+		/* Draw horizontal lines */
+		for ( $i = 0; $i <= $max_y; $i += $step_y ) {
+			$h = ( $i / $max_y ) * 100;
+			echo '<line x1="0" y1="' . $h . '" x2="30" y2="' . $h . '" stroke="black" stroke-width="0.25"' .
+				' vector-effect="non-scaling-stroke"/>';
+		}
+
+		/* Draw bars */
+		foreach ( $data as $p ) {
+			$x = 29 - $p['index'];
+			$h = ( (float) $p['value'] / $max_y ) * 100;
+			echo '<rect x="' . $x . '" y="0" width="0.9" height="' . $h . '" class="stat-bar"/>';
+		}
+
+		echo '</g></svg>';
+
+		/* Draw x-axis labels */
+		for ( $i = 1; $i < 30; $i += 2 ) {
+			$text = date( 'M j', time() - ( 29 - $i )*24*60*60 );
+			echo '<text x="' . ( 5 + ( 95 * ( $i + 0.5 ) / 30 ) ) . '%"' .
+				' y="98%" class="x-label">' . esc_html( $text ) . '</text>';
+		}
+
+		/* Draw y-axis labels */
+		for ( $i = 0; $i <= $step_count; $i++ ) {
+			echo '<text x="4%" y="' . ( 90 - ( ( 85 * $i ) / $step_count ) ) . '%" class="y-label">' .
+				( $i * $step_y ) . '</text>';
+		}
+
+		echo '</svg>';
 	}
 
 	protected function create_transactions_table() {
@@ -246,7 +354,9 @@ CREATE TABLE ' . $this->table_name . ' (
 			echo '<tr><td>' . esc_html( $tx->code ) . '</td>' .
 				'<td>' . esc_html( $tx->id ) . '</td>' .
 				'<td>' . esc_html( $tx->ctime ) . '</td>' .
-				'<td>' . esc_html( number_format( (float) $tx->btc / 100 , 2 , '.' , ' ' ) ) . ' &#181;&#3647;</td>' .
+				'<td style="text-align:right;">' .
+				esc_html( number_format( (float) $tx->btc / 100 , 2 , '.' , ' ' ) ) .
+				' &#181;&#3647;</td>' .
 				'<td style="width:1px;"><a class="button delete" href="' . $delete_url . '">Delete</a></td>' .
 				'</tr>';
 		}
