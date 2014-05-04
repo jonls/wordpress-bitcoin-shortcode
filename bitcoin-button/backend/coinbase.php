@@ -53,27 +53,39 @@ class Coinbase_Backend {
 
 		$doc = json_decode( file_get_contents( 'php://input' ), TRUE );
 
-		/* Validate document */
+		/* Validate document. The following code should only return error
+		   headers on temporary errors that are expected to be resolved if
+		   Coinbase tries to activate the callback later. */
 		if ( ! isset( $doc['order'] ) ||
-		     ! isset( $doc['order']['id'] ) ||
-		     ! isset( $doc['order']['created_at'] ) ||
 		     ! isset( $doc['order']['status'] ) ||
 		     $doc['order']['status'] != 'completed' ||
 		     ! isset( $doc['order']['total_btc'] ) ||
 		     ! isset( $doc['order']['total_btc']['cents'] ) ||
 		     ! isset( $doc['order']['total_native'] ) ||
 		     ! isset( $doc['order']['total_native']['cents'] ) ||
-		     ! isset( $doc['order']['button'] ) ||
-		     ! isset( $doc['order']['button']['id'] ) ) {
+		     ! isset( $doc['order']['button'] ) ) {
 			echo 'Validation error';
 			exit;
 		}
 
-		/* Parse document */
-		$id = $doc['order']['id'];
+		/* We also expect order.id, order.created_at, and order.button.id
+		   to be set, but unfortunately they are not set when a callback test
+		   is run from Coinbase. We have to handle this so the callback test
+		   will run successfully. */
 
-		$ctime = strtotime( $doc['order']['created_at'] );
-		if ( $ctime === FALSE ) exit;
+		/* Parse document */
+		if ( isset( $doc['order']['id'] ) ) {
+			$id = $doc['order']['id'];
+		} else {
+			$id = 'TEST_CALLBACK';
+		}
+
+		if ( isset( $doc['order']['created_at'] ) ) {
+			$ctime = strtotime( $doc['order']['created_at'] );
+			if ( $ctime === FALSE ) exit;
+		} else {
+			$ctime = time();
+		}
 
 		date_default_timezone_set( 'UTC' );
 		$ctime = date( 'Y-m-d H:i:s' , $ctime );
@@ -81,7 +93,11 @@ class Coinbase_Backend {
 		$btc    = $doc['order']['total_btc']['cents'];
 		$native = $doc['order']['total_native']['cents'];
 
-		$code = $doc['order']['button']['id'];
+		if ( isset( $doc['order']['button']['id'] ) ) {
+			$code = $doc['order']['button']['id'];
+		} else {
+			$code = 'TEST_CALLBACK';
+		}
 
 		/* Insert transaction */
 		$this->plugin->add_transaction( $id, $ctime, $btc, $native, $code );
