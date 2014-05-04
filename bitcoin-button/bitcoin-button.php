@@ -592,15 +592,18 @@ CREATE TABLE ' . $this->table_name . ' (
 			      'normal' );
 
 		/* Side */
-		add_meta_box( 'support-info',
-			      'Support',
-			      array( $this, 'support_info_meta_box' ),
+		add_meta_box( 'plugin-info',
+			      'Plugin Info',
+			      array( $this, 'plugin_info_meta_box' ),
 			      $this->options_page,
 			      'side' );
 	}
 
-	public function support_info_meta_box() {
-		echo '<p>Please consider making a donation if you find this plugin useful.</p>'.
+	public function plugin_info_meta_box() {
+		echo '<ul><li><a href="https://github.com/jonls/wordpress-bitcoin-shortcode">Project page</a></li>' .
+			'<li><a href="http://jonls.dk">Author Website</a></li>' .
+			'<li><a href="https://twitter.com/pineappleaddict">Twitter</a></li></ul>' .
+			'<p>Please consider making a donation if you find this plugin useful.</p>'.
 			'<p><iframe src="http://jonls.dk/?bitcoin_button_widget=main"' .
 			' width="250" height="22" frameborder="0" scrolling="no" title="Donate Bitcoin"' .
 			' border="0" marginheight="0" marginwidth="0" allowtransparency="true"></iframe></p>';
