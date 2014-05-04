@@ -307,7 +307,8 @@ CREATE TABLE ' . $this->table_name . ' (
 		/* Find maximum y and step between horizontal lines */
 		$step_y = pow( 10, floor( log10( $max_y ) ) );
 		$step_count = ceil( (float) $max_y / $step_y );
-		if ( $step_count < 4 && $step_y >= 2 ) {
+		while ( $step_count < 4 ) {
+			if ( $step_y < 2 ) break;
 			$step_y /= 2;
 			$step_count *= 2;
 		}
