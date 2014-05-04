@@ -411,6 +411,13 @@ CREATE TABLE ' . $this->table_name . ' (
 
 		echo '<div class="postbox"><div id="widgets" class="inside">';
 
+		$example_id = 'my-widget';
+		if ( count( $this->widgets ) > 0 ) {
+			$example_id = array_shift( array_keys( $this->widgets ) );
+		}
+		echo '<p>Use the ID to add the widgets to a post or page' .
+			' (Example: <code>[bitcoin id="' . esc_html( $example_id ) . '"]</code>).</p>';
+
 		$this->create_widgets_table();
 
 		echo '</div></div></div>';
