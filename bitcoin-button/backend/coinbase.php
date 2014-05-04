@@ -100,7 +100,8 @@ class Coinbase_Backend {
 		}
 
 		/* Insert transaction */
-		$this->plugin->add_transaction( $id, $ctime, $btc, $native, $code );
+		$this->plugin->add_transaction( $id, $ctime, $btc, $native,
+						self::$id, $code );
 
 		exit;
 	}

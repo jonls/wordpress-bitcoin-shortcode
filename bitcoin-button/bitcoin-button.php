@@ -358,12 +358,13 @@ CREATE TABLE ' . $this->table_name . ' (
 		wp_nonce_field( 'add-transaction', 'add-transaction-nonce' );
 
 		echo '<table style="width:100%;"><tbody>' .
-			'<tr><th scope="col">Code</th>' .
-			'<th scope="col">Id</th>' .
-			'<th scope="col">Timestamp</th>' .
-			'<th scope="col">Amount</th>' .
+			'<tr><th scope="col">Id</th>' .
+			'<th scope="col">Backend</th>' .
+			'<th scope="col">Code</th>' .
+			'<th scope="col">Timestamp (UTC)</th>' .
+			'<th scope="col">Amount / &#181;&#3647;</th>' .
 			'<th scope="col" style="width:1px;"></th></tr>';
-		$txs = $wpdb->get_results( 'SELECT id, ctime, amount, code FROM ' . $this->table_name .
+		$txs = $wpdb->get_results( 'SELECT id, backend, code, ctime, amount FROM ' . $this->table_name .
 					   ' ORDER BY ctime DESC');
 		foreach ( $txs as $tx ) {
 			$delete_args = array( 'page' => 'bitcoin-button',
@@ -372,20 +373,27 @@ CREATE TABLE ' . $this->table_name . ' (
 			$delete_url  = wp_nonce_url( admin_url( 'options-general.php?' . build_query( $delete_args ) ),
 						     'delete-transaction',
 						     'delete-transaction-nonce' );
-			echo '<tr><td>' . esc_html( $tx->code ) . '</td>' .
-				'<td>' . esc_html( $tx->id ) . '</td>' .
+			echo '<tr><td>' . esc_html( $tx->id ) . '</td>' .
+				'<td>' . esc_html( $tx->backend ) . '</td>' .
+				'<td>' . esc_html( $tx->code ) . '</td>' .
 				'<td>' . esc_html( $tx->ctime ) . '</td>' .
 				'<td style="text-align:right;">' .
-				esc_html( number_format( (float) $tx->amount / 100 , 2 , '.' , ' ' ) ) .
-				' &#181;&#3647;</td>' .
+				esc_html( number_format( (float) $tx->amount / 100 , 2 , '.' , ' ' ) ) . '</td>' .
 				'<td style="width:1px;"><a class="button delete" href="' . $delete_url . '">Delete</a></td>' .
 				'</tr>';
 		}
 
-		echo '<tr><td><input style="width:100%;" type="text" name="transaction-code"/></td>' .
-			'<td><input style="width:100%;" type="text" name="transaction-id"/></td>' .
-			'<td><input style="width:100%;" type="text" name="transaction-time"/></td>' .
-			'<td><input style="width:100%;" type="text" name="transaction-amount"/></td>' .
+		date_default_timezone_set( 'UTC' );
+
+		echo '<tr><td><input style="width:100%;" type="text" name="transaction-id"' .
+			' placeholder="67LSEOSY5I"/></td>' .
+			'<td><input style="width:100%;" type="text" name="transaction-backend"' .
+			' placeholder="coinbase"/></td>' .
+			'<td><input style="width:100%;" type="text" name="transaction-code"' .
+			' placeholder="81c71f54a9579902c2b0258fc29d368f"/></td>' .
+			'<td><input style="width:100%;" type="text" name="transaction-time"' .
+			' value="' . date( 'Y-m-d H:i:s' ) . '"/></td>' .
+			'<td><input style="width:100%;text-align:right;" type="number" name="transaction-amount"/></td>' .
 			'<td style="width:1px;"><input class="button button-primary" type="submit" value="Add"/></td></tr>' .
 			'</tbody></table></form>';
 	}
@@ -486,15 +494,16 @@ CREATE TABLE ' . $this->table_name . ' (
 	}
 
 	/* Insert new transaction into database */
-	public function add_transaction( $id, $ctime, $amount, $native, $code ) {
+	public function add_transaction( $id, $ctime, $amount, $native, $backend, $code ) {
 		global $wpdb;
 
 		$wpdb->insert( $this->table_name,
-			       array( 'id'     => $id,
-				      'ctime'  => $ctime,
-				      'amount' => $amount,
-				      'native' => $native,
-				      'code'   => $code ) );
+			       array( 'id'      => $id,
+				      'ctime'   => $ctime,
+				      'amount'  => $amount,
+				      'native'  => $native,
+				      'backend' => $backend,
+				      'code'    => $code ) );
 	}
 
 	public function add_options_meta_boxes() {
@@ -520,6 +529,7 @@ CREATE TABLE ' . $this->table_name . ' (
 				    isset( $_REQUEST['transaction-amount'] ) ) {
 
 				/* Add transaction manually */
+				$backend = trim( $_REQUEST['transaction-backend'] );
 				$code = trim( $_REQUEST['transaction-code'] );
 				$id = trim( $_REQUEST['transaction-id'] );
 				$ctime = trim( $_REQUEST['transaction-time'] );
@@ -529,9 +539,10 @@ CREATE TABLE ' . $this->table_name . ' (
 				if ( strlen( $code ) > 0 &&
 				     strlen( $id ) > 0 &&
 				     strlen( $ctime ) > 0 &&
+				     isset( $this->backends[ $backend ] ) &&
 				     $amount > 0 ) {
 					$this->add_transaction( $id, $ctime, $amount,
-								$native, $code );
+								$native, $backend, $code );
 				}
 			} else if ( isset( $_REQUEST['action'] ) &&
 				    $_REQUEST['action'] == 'delete-transaction' &&
