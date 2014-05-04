@@ -2,14 +2,14 @@
 /**
  * @package jonls.dk-Bitcoin-Button
  * @author Jon Lund Steffensen
- * @version 0.7
+ * @version 0.8
  */
 /*
 Plugin Name: jonls.dk-Bitcoin-Button
 Plugin URI: http://jonls.dk/
 Description: Shortcode for inserting a bitcoin button
 Author: Jon Lund Steffensen
-Version: 0.7
+Version: 0.8
 Author URI: http://jonls.dk/
 */
 
