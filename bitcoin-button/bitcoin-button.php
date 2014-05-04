@@ -403,7 +403,7 @@ CREATE TABLE ' . $this->table_name . ' (
 	protected function create_widgets_section() {
 		/* Create options page */
 		echo '<div class="wrap">' .
-			'<h2>Transactions</h2>';
+			'<h2>Widgets</h2>';
 
 		$args = array( 'page' => 'bitcoin-button' );
 		echo '<p><a href="' . esc_url( admin_url( 'options-general.php?' . build_query( $args ) ) ) .
