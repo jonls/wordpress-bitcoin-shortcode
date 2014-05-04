@@ -134,6 +134,9 @@ class Coinbase_Backend {
 
 			$this->plugin->add_widget( $widget_id, self::$id, $widget_info,
 						   array( 'code' => $widget_code ) );
+
+			wp_redirect( admin_url( 'options-general.php?page=bitcoin-button&section=widgets' ) );
+			exit;
 		}
 	}
 

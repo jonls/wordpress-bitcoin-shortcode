@@ -544,6 +544,9 @@ CREATE TABLE ' . $this->table_name . ' (
 					$this->add_transaction( $id, $ctime, $amount,
 								$native, $backend, $code );
 				}
+
+				wp_redirect( admin_url( 'options-general.php?page=bitcoin-button&section=transactions' ) );
+				exit;
 			} else if ( isset( $_REQUEST['action'] ) &&
 				    $_REQUEST['action'] == 'delete-transaction' &&
 				    check_admin_referer( 'delete-transaction', 'delete-transaction-nonce' ) &&
@@ -556,6 +559,9 @@ CREATE TABLE ' . $this->table_name . ' (
 					$wpdb->delete( $this->table_name,
 						       array( 'id' => $id ) );
 				}
+
+				wp_redirect( admin_url( 'options-general.php?page=bitcoin-button&section=transactions' ) );
+				exit;
 			} else if ( isset( $_REQUEST['action'] ) &&
 				    $_REQUEST['action'] == 'delete-widget' &&
 				    check_admin_referer( 'delete-widget', 'delete-widget-nonce' ) &&
@@ -565,6 +571,9 @@ CREATE TABLE ' . $this->table_name . ' (
 				$widget_id = $_REQUEST['widget-id'];
 
 				$this->delete_widget( $widget_id );
+
+				wp_redirect( admin_url( 'options-general.php?page=bitcoin-button&section=widgets' ) );
+				exit;
 			}
 
 			wp_redirect( admin_url( 'options-general.php?page=bitcoin-button' ) );
