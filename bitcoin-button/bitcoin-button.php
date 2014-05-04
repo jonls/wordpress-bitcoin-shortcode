@@ -19,7 +19,7 @@ require_once 'backend/coinbase.php';
 
 class Bitcoin_Button {
 
-	protected $db_version = '1';
+	protected $db_version = '2';
 	protected $table_name = null;
 
 	protected $widgets  = array();
@@ -29,7 +29,7 @@ class Bitcoin_Button {
 
 	public function __construct() {
 		global $wpdb;
-		$this->table_name = $wpdb->prefix . 'bitcoin_button_coinbase';
+		$this->table_name = $wpdb->prefix . 'bitcoin_button_transaction';
 
 		/* User visible section */
 		if ( ! is_admin() ) {
@@ -45,6 +45,7 @@ class Bitcoin_Button {
 		}
 
 		register_activation_hook( __FILE__ , array( $this, 'plugin_install' ) );
+		add_action( 'plugins_loaded', array( $this, 'plugin_update_db_check' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename(__FILE__), array( $this, 'plugin_action_links') );
 
 		$this->widgets = get_option( 'bitcoin_button_widgets', array() );
@@ -112,9 +113,10 @@ class Bitcoin_Button {
 			exit;
 		}
 
-		$backend = $this->backends[ $widget['backend'] ];
-		$url     = $backend->get_payment_url( $widget['data'] );
-		$code    = $backend->get_transaction_code( $widget['data'] );
+		$backend_id = $widget['backend'];
+		$backend    = $this->backends[ $backend_id ];
+		$url        = $backend->get_payment_url( $widget['data'] );
+		$code       = $backend->get_transaction_code( $widget['data'] );
 
 		echo '<!doctype html>' .
 			'<html><head>' .
@@ -125,15 +127,15 @@ class Bitcoin_Button {
 
 		echo '<a id="button" target="_blank" href="' . $url . '">Bitcoin</a>';
 		if ($widget['info'] == 'received') {
-			$btc = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(SUM(btc), 0) FROM ' . $this->table_name .
-							       ' WHERE code = %s AND' .
-							       ' YEAR(ctime) = YEAR(NOW())' , $code ) );
-			$btc = number_format( (float) $btc / 100000000 , 3 , '.' , '' );
-			echo '<a id="counter" target="_blank" href="' . $url . '">' . $btc . ' &#3647;</a>';
+			$amount = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(SUM(amount), 0) FROM ' . $this->table_name .
+								  ' WHERE backend = %s AND code = %s AND' .
+								  ' YEAR(ctime) = YEAR(NOW())' , $backend_id, $code ) );
+			$amount = number_format( (float) $amount / 100000000 , 3 , '.' , '' );
+			echo '<a id="counter" target="_blank" href="' . $url . '">' . $amount . ' &#3647;</a>';
 		} else if ($widget['info'] == 'count') {
 			$count = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(COUNT(*), 0) FROM ' . $this->table_name .
-								 ' WHERE code = %s AND' .
-								 ' YEAR(ctime) = YEAR(NOW())', $code ) );
+								 ' WHERE backend = %s AND code = %s AND' .
+								 ' YEAR(ctime) = YEAR(NOW())', $backend_id, $code ) );
 			echo '<a id="counter" target="_blank" href="' . $url . '">' . $count . '</a>';
 		}
 
@@ -146,21 +148,35 @@ class Bitcoin_Button {
 	public function plugin_install() {
 		global $wpdb;
 
-		$sql = '
+		$installed_version = get_option( 'bitcoin_button_db_version' );
+		if ( $installed_version != $this->db_version ) {
+
+			$sql = '
 CREATE TABLE ' . $this->table_name . ' (
-  id VARCHAR(15) NOT NULL,
+  id VARCHAR(32) NOT NULL,
+  backend VARCHAR(32) NOT NULL,
   ctime TIMESTAMP NOT NULL,
-  btc DECIMAL(20) NOT NULL,
+  amount DECIMAL(20) NOT NULL,
   native DECIMAL(20) NOT NULL,
-  code VARCHAR(50) NOT NULL,
-  UNIQUE KEY id (id),
-  KEY code (code, ctime)
+  code VARCHAR(64) NOT NULL,
+  UNIQUE KEY id (backend, id),
+  KEY code (backend, code, ctime),
+  KEY ctime (ctime)
 );';
 
-		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-		dbDelta( $sql );
+			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+			dbDelta( $sql );
 
-		add_option( 'bitcoin_button_db_version', $this->db_version );
+			update_option( 'bitcoin_button_db_version', $this->db_version );
+		}
+	}
+
+	/* Ensure that plugin database is up to date */
+	public function plugin_update_db_check() {
+		$installed_version = get_option( 'bitcoin_button_db_version' );
+		if ( $installed_version != $this->db_version ) {
+			$this->plugin_install();
+		}
 	}
 
 
@@ -266,15 +282,15 @@ CREATE TABLE ' . $this->table_name . ' (
 
 		/* Collect data points */
 		$max_y = 1;
-		$days = $wpdb->get_results( 'SELECT COUNT(*) AS count, SUM(btc) AS btc, DATE(ctime) AS day,' .
+		$days = $wpdb->get_results( 'SELECT COUNT(*) AS count, SUM(amount) AS amount, DATE(ctime) AS day,' .
 					    '  DATEDIFF(NOW(), DATE(ctime)) AS datediff FROM ' . $this->table_name .
-					    ' GROUP BY day HAVING datediff < 30 ORDER BY day ASC' );
+					    ' GROUP BY day HAVING datediff < 30 AND datediff >= 0 ORDER BY day ASC' );
 		$data = array();
 		foreach ( $days as $day ) {
 			$p = array( 'index' => $day->datediff,
 				    'text' => $day->day );
-			if ( $info == 'btc' ) {
-				$p['value'] = $day->btc / 100;
+			if ( $info == 'amount' ) {
+				$p['value'] = $day->amount / 100;
 			} else {
 				$p['value'] = $day->count;
 			}
@@ -342,7 +358,7 @@ CREATE TABLE ' . $this->table_name . ' (
 			'<th scope="col">Timestamp</th>' .
 			'<th scope="col">Amount</th>' .
 			'<th scope="col" style="width:1px;"></th></tr>';
-		$txs = $wpdb->get_results( 'SELECT id, ctime, btc, code FROM ' . $this->table_name .
+		$txs = $wpdb->get_results( 'SELECT id, ctime, amount, code FROM ' . $this->table_name .
 					   ' ORDER BY ctime DESC');
 		foreach ( $txs as $tx ) {
 			$delete_args = array( 'page' => 'bitcoin-button',
@@ -355,7 +371,7 @@ CREATE TABLE ' . $this->table_name . ' (
 				'<td>' . esc_html( $tx->id ) . '</td>' .
 				'<td>' . esc_html( $tx->ctime ) . '</td>' .
 				'<td style="text-align:right;">' .
-				esc_html( number_format( (float) $tx->btc / 100 , 2 , '.' , ' ' ) ) .
+				esc_html( number_format( (float) $tx->amount / 100 , 2 , '.' , ' ' ) ) .
 				' &#181;&#3647;</td>' .
 				'<td style="width:1px;"><a class="button delete" href="' . $delete_url . '">Delete</a></td>' .
 				'</tr>';
@@ -447,13 +463,13 @@ CREATE TABLE ' . $this->table_name . ' (
 	}
 
 	/* Insert new transaction into database */
-	public function add_transaction( $id, $ctime, $btc, $native, $code ) {
+	public function add_transaction( $id, $ctime, $amount, $native, $code ) {
 		global $wpdb;
 
 		$wpdb->insert( $this->table_name,
 			       array( 'id'     => $id,
 				      'ctime'  => $ctime,
-				      'btc'    => $btc,
+				      'amount' => $amount,
 				      'native' => $native,
 				      'code'   => $code ) );
 	}
@@ -484,14 +500,14 @@ CREATE TABLE ' . $this->table_name . ' (
 				$code = trim( $_REQUEST['transaction-code'] );
 				$id = trim( $_REQUEST['transaction-id'] );
 				$ctime = trim( $_REQUEST['transaction-time'] );
-				$btc = floatval( $_REQUEST['transaction-amount'] ) * 100;
+				$amount = floatval( $_REQUEST['transaction-amount'] ) * 100;
 				$native = 0;
 
 				if ( strlen( $code ) > 0 &&
 				     strlen( $id ) > 0 &&
 				     strlen( $ctime ) > 0 &&
-				     $btc > 0 ) {
-					$this->add_transaction( $id, $ctime, $btc,
+				     $amount > 0 ) {
+					$this->add_transaction( $id, $ctime, $amount,
 								$native, $code );
 				}
 			} else if ( isset( $_REQUEST['action'] ) &&
@@ -511,7 +527,7 @@ CREATE TABLE ' . $this->table_name . ' (
 				    check_admin_referer( 'delete-widget', 'delete-widget-nonce' ) &&
 				    isset( $_REQUEST['widget-id'] ) ) {
 
-				/* Delete existing coinbase widget */
+				/* Delete existing widget */
 				$widget_id = $_REQUEST['widget-id'];
 
 				$this->delete_widget( $widget_id );
