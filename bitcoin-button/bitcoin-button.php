@@ -191,6 +191,8 @@ CREATE TABLE ' . $this->table_name . ' (
 	public function create_options_page() {
 		if ( $_GET['section'] == 'transactions' ) {
 			$this->create_transactions_section();
+		} else if ( $_GET['section'] == 'widgets' ) {
+			$this->create_widgets_section();
 		} else {
 			$this->create_main_section();
 		}
@@ -210,28 +212,31 @@ CREATE TABLE ' . $this->table_name . ' (
 
 		echo '</form>';
 
-		wp_enqueue_script( 'jquery-ui-tabs' );
-
 		/* Create overview pane of options page */
 		echo '<div id="overview-pane" class="postbox">' .
-			'<ul class="category-tabs">' .
-			'<li><a href="#overview-transactions">Transactions</a></li>' .
-			'<li><a href="#overview-widgets">Widgets</a></li>' .
-			'</ul>' .
-			'<br class="clear"/>' .
 			'<div id="overview-transactions" class="inside">';
 
-		$this->create_transactions_chart( 'count' );
+		echo '<p>Value of transactions by day / &#181;&#3647</p>';
 
+		$this->create_transactions_chart( 'amount' );
+
+		echo '<ul>';
+
+		/* Link to transactions */
 		$args = array( 'page' => 'bitcoin-button',
 			       'section' => 'transactions' );
-		echo '<p style="text-align:right;"><a href="' .
+		echo '<li><a href="' .
 			esc_url( admin_url( 'options-general.php?' . build_query( $args ) ) ) .
-			'">Transaction list</a></p>';
+			'">List of Transactions</a></li>';
 
-		echo'</div><div id="overview-widgets" class="hidden inside">';
+		/* List of widgets */
+		$args = array( 'page' => 'bitcoin-button',
+			       'section' => 'widgets' );
+		echo '<li><a href="' .
+			esc_url( admin_url( 'options-general.php?' . build_query( $args ) ) ) .
+			'">List of Widgets</a></li>';
 
-		$this->create_widgets_table();
+		echo '</ul>';
 
 		echo '</div></div>';
 
@@ -383,6 +388,24 @@ CREATE TABLE ' . $this->table_name . ' (
 			'<td><input style="width:100%;" type="text" name="transaction-amount"/></td>' .
 			'<td style="width:1px;"><input class="button button-primary" type="submit" value="Add"/></td></tr>' .
 			'</tbody></table></form>';
+	}
+
+
+	/* Create widgets sections */
+	protected function create_widgets_section() {
+		/* Create options page */
+		echo '<div class="wrap">' .
+			'<h2>Transactions</h2>';
+
+		$args = array( 'page' => 'bitcoin-button' );
+		echo '<p><a href="' . esc_url( admin_url( 'options-general.php?' . build_query( $args ) ) ) .
+			'">Back to options</a></p>';
+
+		echo '<div class="postbox"><div id="widgets" class="inside">';
+
+		$this->create_widgets_table();
+
+		echo '</div></div></div>';
 	}
 
 	protected function create_widgets_table() {
@@ -549,10 +572,6 @@ CREATE TABLE ' . $this->table_name . ' (
 	public function add_options_footer() {
 		/* Postboxes toggle and rearrangement */
 		echo '<script>jQuery(document).ready(function(){postboxes.add_postbox_toggles(pagenow);});</script>';
-
-		/* Postbox tabs */
-		echo '<script>jQuery(document).ready(function($){$("#overview-pane .hidden").removeClass("hidden");' .
-			'$("#overview-pane").tabs();})</script>';
 	}
 
 	public function create_options_meta_boxes() {
