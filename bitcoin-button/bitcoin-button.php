@@ -648,11 +648,12 @@ CREATE TABLE ' . $this->table_name . ' (
 		if ( count( $this->widgets ) > 0 ) {
 			echo '<select id="external-widget-select">';
 			foreach ( $this->widgets as $key => $widget ) {
-				echo '<option name="' . esc_attr( $key ) . '">' . esc_html( $key ) . '</option>';
+				echo '<option value="' . esc_attr( $key ) . '">' . esc_html( $key ) . '</option>';
 			}
 			echo '</select>';
 		} else {
-			echo '<select id="external-widget-select" disabled="disabled"><option>Add a widget first</option></select>';
+			echo '<select id="external-widget-select" disabled="disabled">' .
+				'<option value="">Add a widget first</option></select>';
 		}
 
 		echo '</td></tr>';
