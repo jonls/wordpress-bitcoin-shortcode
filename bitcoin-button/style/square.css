@@ -1,0 +1,67 @@
+/*
+  Name: Square
+  Width: 48
+  Height: 48
+*/
+
+* {
+    margin: 0;
+    padding: 0;
+    font-size: 1em;
+}
+
+body {
+    display: inline-block;
+    position: relative;
+}
+
+#button, #counter {
+    display: block;
+    line-height: 18px;
+    font-size: 10pt;
+    text-decoration: none;
+    font-family: "Helvetica", sans-serif;
+}
+
+#button {
+    width: 40px;
+    height: 40px;
+    margin: 4px;
+    padding: 0;
+    border: none;
+    color: white;
+    background-color: #f9aa4b;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAaCAYAAACzdqxAAAAB9ElEQVRIx62Vu49NURTGf1tMjAghk3gkzFyMRGJiuAqdRxQK0SoUqEfDaPkHRBSTEJWIahrNeDSEkdBIxnhM4ZUwXgWDG1Fgwk+zL8fOufecY3zNyfettb69zz7rrA0loM5SJ9Ural9TY6ZQ6/7BSnWuOqVeVleXNVmh7lN7MtqRaPoy8h2R/1AX5fnMztF2A6eiwXPgOrApxm7G59b4vB9C+FR2x2dsjYZ6SX0W+cmqZ7pKHbYYj9RdVc3XJyZf1IkWC1xV+8saH0iKR6Leow6ob5L4V3VtGeNzSeFgEl+cOesmhpvxdk2+PeGjWRJCeAfcTnKWtzVWa0B3RmoA95KcTqAvKX3Vro8BtiV8AfBQHQfGgU5gJ1BP8oaqnm8RvqnHy3y4F0nhQfV0HER5GChjWkuKptSQifer13LMD1ft3ws5OUE9n+R9V7v/6gq1V92jrgP2Jj43UuMQgsDFRO4ANqddcRTY3+IlRlvovTla4/fi6hJgEpjTwuAJMAbcBR4A84CNcTMhkzcNLA0hfMxeO3V1UB2Jo/FfcKLo43Won2Py0zhcivBYnV9kvCFTsEZdqE5HfksdU9+rb9U76rH4exf28aFo8jryLZH/VLvKzvO8IVQDzHRDc8pNhBA+zPS672re0urZuNsh/jfiQsuq1PwCgx0cEfoYiXMAAAAASUVORK5CYII=');
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+#button:hover {
+    color: white;
+    text-decoration: none;
+    background-color: #f7931a;
+}
+
+#button-text {
+    display: none;
+}
+
+#counter {
+    position: absolute;
+    top: 0; right: 0;
+    text-align: right;
+    padding: 0 3px;
+    border: 1px solid white;
+    border-radius: 5px;
+    color: white;
+    background-color: #f00;
+    line-height: 12px;
+    font-size: 8px;
+    max-width: 24px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+#counter:hover {
+    background-color: #d20;
+}
