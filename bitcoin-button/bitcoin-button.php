@@ -14,6 +14,7 @@ Author URI: http://jonls.dk/
 */
 
 
+require_once 'backend/static.php';
 require_once 'backend/coinbase.php';
 
 
@@ -56,6 +57,7 @@ class Bitcoin_Button {
 		if ( count( $this->styles ) == 0 ) $this->scan_widget_styles();
 
 		/* Load backends */
+		$this->backends[ Static_Backend::$id ] = new Static_Backend( $this );
 		$this->backends[ Coinbase_Backend::$id ] = new Coinbase_Backend( $this );
 	}
 
