@@ -495,6 +495,12 @@ CREATE TABLE ' . $this->table_name . ' (
 						     'delete-widget-nonce' );
 			$widget_info = array_key_exists( $widget['info'], $info_options ) ? $widget['info'] : 'off';
 
+			$widget_backend = $widget['backend'];
+			if ( isset ( $this->backends[ $widget_backend ] ) ) {
+				$backend = $this->backends[ $widget_backend ];
+				$widget_backend = $backend::$name;
+			}
+
 			$widget_style = '(unknown)';
 			if ( isset( $this->styles[ $widget['style']['id'] ] ) ) {
 				$style = $this->styles[ $widget['style']['id'] ];
@@ -503,7 +509,7 @@ CREATE TABLE ' . $this->table_name . ' (
 			}
 
 			echo '<tr><td>' . esc_html( $key ) . '</td>' .
-				'<td>' . esc_html( $widget['backend'] ) . '</td>' .
+				'<td>' . esc_html( $widget_backend ) . '</td>' .
 				'<td>' . esc_html( $info_options[ $widget_info ] ) . '</td>' .
 				'<td>' . esc_html( $widget_style ) . '</td>' .
 				'<td style="width:1px;"><a class="button delete" href="' . $delete_url . '">Delete</a></td></tr>';
