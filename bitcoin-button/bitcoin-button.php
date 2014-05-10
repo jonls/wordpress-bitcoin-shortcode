@@ -66,7 +66,8 @@ class Bitcoin_Button {
 
 
 	public function generate_widget_iframe( $widget_id ) {
-		$style_id = isset( $widget_id['style']['id'] ) ? $widget_id['style']['id'] : 'compact.css';
+		$widget   = $this->widgets[ $widget_id ];
+		$style_id = isset( $widget['style']['id'] ) ? $widget['style']['id'] : 'compact.css';
 		$style    = $this->styles[ $style_id ];
 		return '<iframe src="' . site_url() . '/?bitcoin_button_widget=' . urlencode( $widget_id ) . '"' .
 			' width="' . $style['width'] . '" height="' . $style['height']. '" frameborder="0"' .
