@@ -132,27 +132,45 @@ class Bitcoin_Button {
 		$style_id   = isset( $widget['style']['id'] ) ? $widget['style']['id'] : 'compact.css';
 		$style      = $this->styles[ $style_id ];
 
+		$text        = null;
+
+		$body_classes = array();
+
+		/* Generate widget text */
+		if ( $widget['info'] == 'received' ) {
+			$amount   = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(SUM(amount), 0) FROM ' . $this->table_name .
+								    ' WHERE backend = %s AND code = %s AND' .
+								    ' YEAR(ctime) = YEAR(NOW())' , $backend_id, $code ) );
+			$amount   = number_format( (float) $amount / 100000000 , 3 , '.' , '' );
+			$text     = $amount . ' &#3647;';
+
+			if ( $amount == 0 ) $body_classes[] = 'zero-amount';
+		} else if ( $widget['info'] == 'count' ) {
+			$count    = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(COUNT(*), 0) FROM ' . $this->table_name .
+								    ' WHERE backend = %s AND code = %s AND' .
+								    ' YEAR(ctime) = YEAR(NOW())', $backend_id, $code ) );
+			$text     = $count;
+
+			if ( $count == 0 ) $body_classes[] = 'zero-amount';
+		}
+
+		/* Generate widget page */
 		echo '<!doctype html>' .
 			'<html><head>' .
 			'<meta charset="utf-8"/>' .
 			'<title>Bitcoin Button Widget</title>' .
 			'<link rel="stylesheet" href="' . plugins_url( 'style/' . $style_id, __FILE__ ) . '"/>' .
-			'</head><body marginwidth="0" marginheight="0">';
+			'</head><body marginwidth="0" marginheight="0"';
+		if ( count( $body_classes ) > 0 ) {
+			echo ' class="' . implode( ' ', $body_classes ) . '"';
+		}
+		echo '>';
 
 		echo '<a id="button" target="_blank" href="' . $url . '"><span id="button-text">Bitcoin</span></a>';
-		if ( $widget['info'] == 'received' ) {
-			$amount = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(SUM(amount), 0) FROM ' . $this->table_name .
-								  ' WHERE backend = %s AND code = %s AND' .
-								  ' YEAR(ctime) = YEAR(NOW())' , $backend_id, $code ) );
-			$amount = number_format( (float) $amount / 100000000 , 3 , '.' , '' );
+
+		if ( $text !== null ) {
 			echo '<a id="counter" target="_blank" href="' . $url . '">' .
-				'<span id="counter-text">' . $amount . ' &#3647;</span></a>';
-		} else if ( $widget['info'] == 'count' ) {
-			$count = $wpdb->get_var( $wpdb->prepare( 'SELECT IFNULL(COUNT(*), 0) FROM ' . $this->table_name .
-								 ' WHERE backend = %s AND code = %s AND' .
-								 ' YEAR(ctime) = YEAR(NOW())', $backend_id, $code ) );
-			echo '<a id="counter" target="_blank" href="' . $url . '">' .
-				'<span id="counter-text">' . $count . '</span></a>';
+				'<span id="counter-text">' . $text . '</span></a>';
 		}
 
 		echo '</body></html>';

@@ -65,3 +65,7 @@ body {
 #counter:hover {
     background-color: #d20;
 }
+
+.zero-amount #counter {
+    display: none;
+}
